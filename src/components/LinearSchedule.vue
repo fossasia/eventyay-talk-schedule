@@ -10,7 +10,8 @@
 					:session="session",
 					:faved="session.id && favs.includes(session.id)",
 					@fav="$emit('fav', session.id)",
-					@unfav="$emit('unfav', session.id)"
+					@unfav="$emit('unfav', session.id)",
+					isLinearSchedule=true
 				)
 				.break(v-else)
 					.title {{ getLocalizedString(session.title) }}
