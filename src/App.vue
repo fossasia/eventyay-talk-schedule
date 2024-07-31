@@ -18,7 +18,6 @@
 					path(d="m344.75 463.61h-117.92c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h117.92c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h99.926c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-99.926c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469 18.469 8.0508 18.469 18.469z")
 				template Filter
 				template(v-if="filteredTracks.length") ({{ filteredTracks.length }})
-			bunt-select(v-if="!showGrid", style="margin-left: 0px", name="sort", :options="sortOptions", v-model="selectedSort")
 			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()", :class="onlyFavs ? ['active'] : []")
 				svg#star(viewBox="0 0 24 24")
 					polygon(
@@ -119,7 +118,8 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
 		},
 		showGrid () {
-			return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			// return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			return false
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
