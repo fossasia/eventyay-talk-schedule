@@ -18,6 +18,7 @@
 					path(d="m344.75 463.61h-117.92c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h117.92c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h99.926c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-99.926c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469 18.469 8.0508 18.469 18.469z")
 				template Filter
 				template(v-if="filteredTracks.length") ({{ filteredTracks.length }})
+			bunt-select(v-if="!showGrid", style="margin-left: 0px", name="sort", :options="sortOptions", v-model="selectedSort")
 			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()", :class="onlyFavs ? ['active'] : []")
 				svg#star(viewBox="0 0 24 24")
 					polygon(
@@ -26,7 +27,7 @@
 					)
 				template {{ favs.length }}
 			template(v-if="!inEventTimezone")
-				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+				bunt-select(style="margin-left: 0px", name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
 			template(v-else)
 				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
 		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay && currentDay.format()", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
@@ -48,9 +49,17 @@
 			:now="now",
 			:scrollParent="scrollParent",
 			:favs="favs",
+			:sortBy="sortBy",
 			@changeDay="currentDay = $event",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
+		.modal(v-if="showModal")
+			.modal-content
+				.modal-header
+					.h3.modal-title Warning
+				.modal-body.p Please login to add a session to your personal schedule.
+				.modal-footer
+					.button(@click="closeModal") OK
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -98,6 +107,11 @@ export default {
 			allTracks: [],
 			onlyFavs: false,
 			scheduleError: false,
+			sortOptions: [
+				{id: 'title', label: 'By Title'}, {id: 'time', label: 'By Time'}, {id: 'popularity', label: 'By Popularity'}
+			],
+			selectedSort: 'time',
+			showModal: false,
 		}
 	},
 	computed: {
@@ -137,6 +151,7 @@ export default {
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
+					fav_count: session.fav_count,
 					do_not_record: session.do_not_record
 				})
 			}
@@ -176,6 +191,12 @@ export default {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
 			return url.pathname.replace(/\//g, '')
+			},
+			selectSortLabel () {
+				return this.sortOption?.find(el => el.id === this.selectedSort) ? this.sortOption.find(el => el.id === this.selectedSort).label : 'Sort By'
+			},
+			sortBy () {
+				return this.selectedSort
 		}
 	},
 	async created () {
@@ -207,8 +228,7 @@ export default {
 			this.onWindowResize()
 		}
 		this.schedule.tracks.forEach(t => { t.value = t.id; t.label = getLocalizedString(t.name); this.allTracks.push(t) })
-		this.favs = this.pruneFavs(this.loadFavs(), this.schedule)
-
+		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment(fragment, 'YYYY-MM-DD')
@@ -256,8 +276,26 @@ export default {
 		onScrollParentResize (entries) {
 			this.scrollParentWidth = entries[0].contentRect.width
 		},
-		loadFavs () {
-			const data = localStorage.getItem(`${this.eventSlug}_favs`)
+		async loadFavs () {
+			const dataCached = localStorage.getItem(`${this.eventSlug}_favs`)
+			let userData = []
+			try {
+				userData = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						})).json()
+			} catch (e) {
+				console.error('error happened when trying to load favourite talk')
+			}
+			let data
+			if (userData.length !== 0) {
+				data = JSON.stringify(userData)
+			} else {
+				data = dataCached
+			}
 			if (data) {
 				try {
 					return JSON.parse(data)
@@ -272,28 +310,69 @@ export default {
 			const talkIds = talks.map(e => e.code)
 			return favs.filter(e => talkIds.includes(e))
 		},
-		saveFavs () {
+		closeModal() {
+			this.showModal = false;
+		},
+		async saveFavs () {
+			try {
+				const response = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
+						{
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify(this.favs)
+						}))				
+				if (response.status === 400) {
+					const data = await response.json()
+					if (data === 'user_not_logged_in') {
+						this.showModal = true;
+						return
+					}
+				}
+			} catch (e) {
+				console.error(`error happened when trying to save favourite talk: ${JSON.stringify(this.favs)}`)
+			}
 			localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
 		},
-		fav (id) {
+		async fav (id) {
 			if (!this.favs.includes(id)) {
 				this.favs.push(id)
-				this.saveFavs()
+				await this.saveFavs()
 			}
 		},
-		unfav (id) {
+		async unfav (id) {
 			this.favs = this.favs.filter(elem => elem !== id)
-			this.saveFavs()
+			await this.saveFavs()
 			if (!this.favs.length) this.onlyFavs = false
 		},
 		resetFilteredTracks () {
 			this.allTracks.forEach(t => t.selected = false)
+		},
+		sortTrack (id) {
+			this.selectedSort = id
 		}
 	}
 }
 </script>
 <style lang="stylus">
 @import 'styles/global.styl'
+.bunt-drop-element
+	z-index: 99 !important
+.options
+	margin: 5px 0px
+	cursor pointer
+	padding: 5px
+	&:hover
+		background: #C7C7C7
+		color: white
+.bunt-drop-content
+	width: 124px
+	.bunt-popover-inner
+		border-color: #C7C7C7
+		border-radius: 4px
+		border: 1px solid
+		padding: 0px 10px
 .schedule-error
 	color: $clr-error
 	font-size: 18px
@@ -370,6 +449,17 @@ export default {
 				width: 36px
 				height: 36px
 				margin-right: 6px
+		.sort-tracks
+			margin-right: 8px
+			display: flex
+			.bunt-button-text
+				display: flex
+				align-items: center
+				padding-right: 8px
+			svg
+				width: 22px
+				height: 22px
+				margin-right: 6px
 		.bunt-select
 			max-width: 300px
 			padding-right: 8px
@@ -400,4 +490,54 @@ export default {
 				min-width: min-content
 			.bunt-tab-header-item-text
 				white-space: nowrap
+
+.modal {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 999;
+}
+	
+.modal-content {
+	background-color: white;
+	padding: 20px;
+	border-radius: 5px;
+	width: 300px;
+	text-align: center;
+	position: relative;
+	border: 1px solid var(--pretalx-clr-primary);
+}
+	
+.modal-header {
+	margin-bottom: 10px;
+}
+	
+.modal-title {
+	margin: 0;
+	font-size: 1.25em;
+	color: var(--pretalx-clr-primary);
+}
+	
+.modal-body {
+	margin-bottom: 20px;
+}
+	
+.modal-footer {
+	display: flex;
+	justify-content: flex-end;
+}
+	
+.modal-footer button {
+	background-color: transparent;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
 </style>
