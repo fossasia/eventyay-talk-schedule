@@ -23,6 +23,9 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
+		.tags-box
+			.tags(v-for="tag_item of session.tags")
+				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
 
 	bunt-icon-button.btn-fav-container(@click.prevent.stop="faved ? $emit('unfav', session.id) : $emit('fav', session.id)")
 		svg.star(viewBox="0 0 24 24")
@@ -110,6 +113,27 @@ export default {
 			} catch (error) {
 				return this.session.abstract
 			}
+		}
+	},
+	methods: {
+		getContrastColor(bgColor) {
+			if (!bgColor) {
+				return '';
+			}
+
+			// Remove the hash if it's there
+			bgColor = bgColor.replace('#', '');
+
+			// Convert the color to RGB
+			var r = parseInt(bgColor.slice(0, 2), 16);
+			var g = parseInt(bgColor.slice(2, 4), 16);
+			var b = parseInt(bgColor.slice(4, 6), 16);
+
+			// Calculate the brightness of the color
+			var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+			// If the brightness is over 128, return black. Otherwise, return white
+			return brightness > 128 ? 'black' : 'white';
 		}
 	}
 }
@@ -255,4 +279,11 @@ export default {
 
 	.do_not_record
 		margin: 10px 0px
+	.tags-box
+		display: flex
+		margin: 5px 0px
+		.tags
+			margin: 0px 2px
+			.tag-item
+				padding: 3px
 </style>

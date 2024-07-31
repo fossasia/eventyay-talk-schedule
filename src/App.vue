@@ -151,7 +151,8 @@ export default {
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
 					fav_count: session.fav_count,
-					do_not_record: session.do_not_record
+					do_not_record: session.do_not_record,
+					tags: session.tags
 				})
 			}
 			sessions.sort((a, b) => a.start.diff(b.start))
