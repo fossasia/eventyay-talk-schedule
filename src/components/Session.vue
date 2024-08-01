@@ -12,8 +12,9 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 		.speakers(v-if="session.speakers")
 			.avatars
 				template(v-for="speaker of session.speakers")
-					img(v-if="speaker.avatar", :src="speaker.avatar")
-			.names {{ session.speakers.map(s => s.name).join(', ') }}
+					.speaker-info
+						img(v-if="speaker.avatar", :src="speaker.avatar")
+						.names {{ speaker.name }}
 		.do_not_record
 			svg(v-if="session.do_not_record", viewBox="0 -1 24 24", width="22px", height="22px", fill="none", xmlns="http://www.w3.org/2000/svg")
 				path(d="M1.29292 20.2929C0.902398 20.6834 0.902398 21.3166 1.29292 21.7071C1.68345 22.0976 2.31661 22.0976 2.70714 21.7071L22.7071 1.70711C23.0977 1.31658 23.0977 0.68342 22.7071 0.29289C22.3166 -0.097631 21.6834 -0.097631 21.2929 0.29289L20.2975 1.28829C20.296 1.28982 20.2944 1.29135 20.2929 1.29289L2.29289 19.2929C2.29136 19.2944 2.28984 19.296 2.28832 19.2975L1.29292 20.2929z", fill="#758CA3")
@@ -204,18 +205,18 @@ export default {
 			color: $clr-secondary-text-light
 			display: flex
 			.avatars
-				flex: none
-				> *:not(:first-child)
-					margin-left: -20px
-				img
-					background-color: $clr-white
-					border-radius: 50%
-					height: 24px
-					width: @height
-					margin: 0 8px 0 0
-					object-fit: cover
-			.names
-				line-height: 24px
+				.speaker-info
+					display: flex
+					flex: none
+					img
+						background-color: $clr-white
+						border-radius: 50%
+						height: 24px
+						width: @height
+						margin: 0 8px 0 0
+						object-fit: cover
+					.names
+						line-height: 24px
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
