@@ -35,6 +35,7 @@ export default {
 		currentDay: Object,
 		now: Object,
 		scrollParent: Element,
+		sortBy: String,
 	},
 	data () {
 		return {
@@ -59,11 +60,38 @@ export default {
 					buckets[key].push(session)
 				}
 			}
-			return Object.entries(buckets).map(([date, sessions]) => ({
-				date: sessions[0].start,
-				// sort by room for stable sort across time buckets
-				sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
-			}))
+
+			return Object.entries(buckets).map(([date, sessions]) => {
+				let sessionBucket = {}
+				switch (this.sortBy) {
+					case 'title':
+						sessionBucket = {
+							date: sessions[0].start,
+							// sort by room for stable sort across time buckets
+							sessions: sessions.sort((a, b) => {
+								return a.title.localeCompare(b.title)
+							})
+						}
+						break
+					case 'popularity':
+						sessionBucket = {
+							date: sessions[0].start,
+							// sort by room for stable sort across time buckets
+							sessions: sessions.sort((a, b) => {
+								return b.fav_count - a.fav_count
+							})
+						}
+						break
+					default:
+						sessionBucket = {
+							date: sessions[0].start,
+							// sort by room for stable sort across time buckets
+							sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
+						}
+				}
+
+				return sessionBucket
+			})
 		}
 	},
 	watch: {
@@ -175,4 +203,3 @@ export default {
 				font-weight: 500
 				color: $clr-secondary-text-light
 </style>
-	

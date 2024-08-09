@@ -190,7 +190,7 @@ export default {
 				}
 			})
 			// remove gap at the end of the schedule
-			if (compactedSlices[compactedSlices.length - 1]?.gap) compactedSlices.pop()
+			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -435,4 +435,3 @@ export default {
 	.bunt-scrollbar-rail-wrapper-x, .bunt-scrollbar-rail-wrapper-y
 		z-index: 30
 </style>
-	
