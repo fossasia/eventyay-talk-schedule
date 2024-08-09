@@ -261,36 +261,13 @@ export default {
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
-			const language_type = this.locale.split('-')[0];
-			if (t.session_type) {
-				if (language_type != null) {
-					if (t.session_type[language_type] != null) {
-						if (!obj[t.session_type[language_type]]) {
-							obj[t.session_type[language_type]] = true
-							const item = {
-								value: t.session_type,
-								label: (t.session_type[language_type])
-							}
-							this.filter.types.data.push(item)
-						}
-					} else {
-						if (!obj[t.session_type['en']]) {
-							obj[t.session_type['en']] = true
-							const item = {
-								value: t.session_type,
-								label: (t.session_type['en'])
-							}
-							this.filter.types.data.push(item)
-						}
-					}
-				} else {
-					obj[t.session_type] = true
-					const item = {
-						value: t.session_type,
-						label: (t.session_type)
-					}
-					this.filter.types.data.push(item)
+			if (t.session_type && !obj[t.session_type]) {
+				obj[t.session_type] = true
+				const item = {
+					value: t.session_type,
+					label: (t.session_type)
 				}
+				this.filter.types.data.push(item)
 			}
 		})
 
