@@ -138,7 +138,7 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
 		},
 		showGrid () {
-			return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			return this.format !== 'list' // if we can't fit two rooms together, switch to list
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
@@ -475,16 +475,19 @@ export default {
 					color: $clr-grey-600
 					margin-left: 32px
 	.settings
-		margin-left: 18px
+		max-width: var(--schedule-max-width)
+		position: sticky
+		left: 0
 		align-self: flex-start
 		display: flex
 		align-items: center
-		position: sticky
 		z-index: 100
-		left: 18px
 		width: 100%
+		flex-wrap: wrap
+		@media screen and (max-width: 480px)
+			margin-left: 5px
+			margin-top: 10px
 		.fav-toggle
-			margin-right: 8px
 			display: flex
 			&.active
 				border: #FFA000 2px solid
@@ -507,8 +510,9 @@ export default {
 				height: 36px
 				margin-right: 6px
 		.bunt-select
-			max-width: 300px
+			max-width: 150px
 			padding-right: 8px
+			margin-left: 5px
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
@@ -536,4 +540,58 @@ export default {
 				min-width: min-content
 			.bunt-tab-header-item-text
 				white-space: nowrap
+.modal {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 999;
+}
+					
+.modal-content {
+	background-color: white;
+	padding: 20px;
+	border-radius: 5px;
+	width: 300px;
+	text-align: center;
+	position: relative;
+	border: 1px solid var(--pretalx-clr-primary);
+}
+	
+.modal-header {
+	margin-bottom: 10px;
+}
+	
+.modal-title {
+	margin: 0;
+	font-size: 1.25em;
+	color: var(--pretalx-clr-primary);
+}
+	
+.modal-body {
+	margin-bottom: 20px;
+}
+	
+.modal-footer {
+	display: flex;
+	justify-content: flex-end;
+	.button {
+		cursor:pointer;
+		border: 1px solid var(--pretalx-clr-primary)
+		padding: 2px 5px;
+		border-radius: 5px;
+	}
+}
+	
+.modal-footer button {
+	background-color: transparent;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	padding: 5px 10px;
+	cursor: pointer;
+}
 </style>
