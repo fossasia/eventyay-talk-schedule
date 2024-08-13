@@ -261,36 +261,13 @@ export default {
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
-			const language_type = this.locale.split('-')[0];
-			if (t.session_type) {
-				if (language_type != null) {
-					if (t.session_type[language_type] != null) {
-						if (!obj[t.session_type[language_type]]) {
-							obj[t.session_type[language_type]] = true
-							const item = {
-								value: t.session_type,
-								label: (t.session_type[language_type])
-							}
-							this.filter.types.data.push(item)
-						}
-					} else {
-						if (!obj[t.session_type['en']]) {
-							obj[t.session_type['en']] = true
-							const item = {
-								value: t.session_type,
-								label: (t.session_type['en'])
-							}
-							this.filter.types.data.push(item)
-						}
-					}
-				} else {
-					obj[t.session_type] = true
-					const item = {
-						value: t.session_type,
-						label: (t.session_type)
-					}
-					this.filter.types.data.push(item)
+			if (t.session_type && !obj[t.session_type]) {
+				obj[t.session_type] = true
+				const item = {
+					value: t.session_type,
+					label: (t.session_type)
 				}
+				this.filter.types.data.push(item)
 			}
 		})
 
@@ -475,7 +452,7 @@ export default {
 					color: $clr-grey-600
 					margin-left: 32px
 	.settings
-		max-width: var(--schedule-max-width)
+		max-width: calc(var(--schedule-max-width) - 10px)
 		position: sticky
 		left: 0
 		align-self: flex-start
@@ -484,9 +461,7 @@ export default {
 		z-index: 100
 		width: 100%
 		flex-wrap: wrap
-		@media screen and (max-width: 480px)
-			margin-left: 5px
-			margin-top: 10px
+		margin-left: 10px
 		.fav-toggle
 			display: flex
 			&.active
