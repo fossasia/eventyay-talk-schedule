@@ -4,21 +4,16 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="schedule && sessions")
-		.modal-overlay(v-if="showFilterModal", @click.stop="showFilterModal = false")
-			.modal-box(@click.stop="")
-				h3 Tracks
-				.checkbox-line(v-for="track in allTracks", :key="track.value", :style="{'--track-color': track.color}")
-					bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
-					.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 		.settings
-			bunt-button.filter-tracks(v-if="this.schedule.tracks.length", @click="showFilterModal=true")
-				svg#filter(viewBox="0 0 752 752")
-					path(d="m401.57 264.71h-174.75c-6.6289 0-11.84 5.2109-11.84 11.84 0 6.6289 5.2109 11.84 11.84 11.84h174.75c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h43.098c6.6289 0 11.84-5.2109 11.84-11.84 0-6.6289-5.2109-11.84-11.84-11.84h-43.098c-5.2109-17.523-21.312-30.309-40.254-30.309-19.414 0-35.516 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469c9.4727-0.003906 18.469 8.0469 18.469 18.469z")
-					path(d="m259.5 359.43h-32.676c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h32.676c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h185.17c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-185.17c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.73 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469-9.9453 0-18.469-8.0508-18.469-18.469s8.5234-18.469 18.469-18.469c9.9453 0 18.469 8.0508 18.469 18.469z")
-					path(d="m344.75 463.61h-117.92c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h117.92c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h99.926c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-99.926c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469 18.469 8.0508 18.469 18.469z")
-				template Filter
-				template(v-if="filteredTracks.length") ({{ filteredTracks.length }})
-			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()", :class="onlyFavs ? ['active'] : []")
+			app-dropdown(v-for="item in filter")
+				template(slot="toggler")
+					span {{item.title}}
+				app-dropdown-content
+					app-dropdown-item(v-for="track in item.data", :key="track.value")
+						.checkbox-line(:style="{'--track-color': track.color}")
+							bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
+							.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
+			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFiltered()", :class="onlyFavs ? ['active'] : []")
 				svg#star(viewBox="0 0 24 24")
 					polygon(
 						:style="{fill: '#FFA000', stroke: '#FFA000'}"
@@ -26,9 +21,14 @@
 					)
 				template {{ favs.length }}
 			template(v-if="!inEventTimezone")
-				bunt-select(style="margin-left: 0px", name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
 			template(v-else)
 				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
+			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
+				svg(viewBox="0 0 24 24")
+					path(
+						d="M14.76 20.83L17.6 18l-2.84-2.83l1.41-1.41L19 16.57l2.83-2.81l1.41 1.41L20.43 18l2.81 2.83l-1.41 1.41L19 19.4l-2.83 2.84zM12 12v7.88c.04.3-.06.62-.29.83a.996.996 0 0 1-1.41 0L8.29 18.7a.99.99 0 0 1-.29-.83V12h-.03L2.21 4.62a1 1 0 0 1 .17-1.4c.19-.14.4-.22.62-.22h14c.22 0 .43.08.62.22a1 1 0 0 1 .17 1.4L12.03 12z"
+					)
 		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay && currentDay.format()", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 		grid-schedule(v-if="showGrid",
@@ -48,7 +48,6 @@
 			:now="now",
 			:scrollParent="scrollParent",
 			:favs="favs",
-			:sortBy="sortBy",
 			@changeDay="currentDay = $event",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -68,12 +67,15 @@ import moment from 'moment-timezone'
 import LinearSchedule from 'components/LinearSchedule'
 import GridSchedule from 'components/GridSchedule'
 import { findScrollParent, getLocalizedString } from 'utils'
+import AppDropdown from 'components/AppDropdown.vue'
+import AppDropdownContent from 'components/AppDropdownContent.vue'
+import AppDropdownItem from 'components/AppDropdownItem.vue'
 
 Vue.use(Buntpapier)
 
 export default {
 	name: 'PretalxSchedule',
-	components: { LinearSchedule, GridSchedule },
+	components: { LinearSchedule, GridSchedule, AppDropdown, AppDropdownContent, AppDropdownItem },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -106,11 +108,29 @@ export default {
 			allTracks: [],
 			onlyFavs: false,
 			scheduleError: false,
-			sortOptions: [
-				{id: 'title', label: 'By Title'}, {id: 'time', label: 'By Time'}, {id: 'popularity', label: 'By Popularity'}
-			],
-			selectedSort: 'time',
+			selectedTracks: [],
 			showModal: false,
+			allRooms: [],
+			allSessionTypes: [],
+			selectedRooms: [],
+			selectedSessionTypes: [],
+			filter: {
+				tracks: {
+					refKey: 'track',
+					data: [],
+					title: 'Tracks'
+				},
+				rooms: {
+					refKey: 'room',
+					data: [],
+					title: 'Rooms'
+				},
+				types: {
+					refKey: 'session_type',
+					data: [],
+					title: 'Types'
+				}
+			}
 		}
 	},
 	computed: {
@@ -129,7 +149,21 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			return this.allTracks.filter(t => t.selected)
+			let results = null
+			Object.keys(this.filter).forEach(key => {
+				const refKey = this.filter[key].refKey
+				const selectedIds = this.filter[key].data.filter(t => t.selected).map(t => t.value)
+				let founds = null
+				if (selectedIds.length) {
+					if (results && results.length) {
+						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]) && results && results.includes(t.id))?.map(i => i.id) || []
+					} else {
+						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]))?.map(i => i.id) || []
+					}
+					results = founds
+				}
+			})
+			return results
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -138,9 +172,10 @@ export default {
 		sessions () {
 			if (!this.schedule || !this.currentTimezone) return
 			const sessions = []
+			const filter = this.filteredTracks
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
-				if (this.filteredTracks && this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
+				if (filter && !filter.includes(session.id)) continue
 				sessions.push({
 					id: session.code,
 					title: session.title,
@@ -191,12 +226,6 @@ export default {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
 			return url.pathname.replace(/\//g, '')
-			},
-			selectSortLabel () {
-				return this.sortOption?.find(el => el.id === this.selectedSort) ? this.sortOption.find(el => el.id === this.selectedSort).label : 'Sort By'
-			},
-			sortBy () {
-				return this.selectedSort
 		}
 	},
 	async created () {
@@ -295,12 +324,12 @@ export default {
 			let userData = []
 			try {
 				userData = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
-						{
-							method: 'GET',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						})).json()
+					{
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					})).json()
 			} catch (e) {
 				console.error('error happened when trying to load favourite talk')
 			}
@@ -324,23 +353,23 @@ export default {
 			const talkIds = talks.map(e => e.code)
 			return favs.filter(e => talkIds.includes(e))
 		},
-		closeModal() {
-			this.showModal = false;
+		closeModal () {
+			this.showModal = false
 		},
 		async saveFavs () {
 			try {
 				const response = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
-						{
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify(this.favs)
-						}))				
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(this.favs)
+					}))
 				if (response.status === 400) {
 					const data = await response.json()
 					if (data === 'user_not_logged_in') {
-						this.showModal = true;
+						this.showModal = true
 						return
 					}
 				}
@@ -360,33 +389,24 @@ export default {
 			await this.saveFavs()
 			if (!this.favs.length) this.onlyFavs = false
 		},
-		resetFilteredTracks () {
-			this.allTracks.forEach(t => t.selected = false)
+		resetAllFiltered () {
+			this.resetFiltered()
+			this.onlyFavs = false
 		},
-		sortTrack (id) {
-			this.selectedSort = id
+		resetFiltered () {
+			Object.keys(this.filter).forEach(key => {
+				this.filter[key].data.forEach(t => {
+					if (t.selected) {
+						t.selected = false
+					}
+				})
+			})
 		}
 	}
 }
 </script>
 <style lang="stylus">
 @import 'styles/global.styl'
-.bunt-drop-element
-	z-index: 99 !important
-.options
-	margin: 5px 0px
-	cursor pointer
-	padding: 5px
-	&:hover
-		background: #C7C7C7
-		color: white
-.bunt-drop-content
-	width: 124px
-	.bunt-popover-inner
-		border-color: #C7C7C7
-		border-radius: 4px
-		border: 1px solid
-		padding: 0px 10px
 .schedule-error
 	color: $clr-error
 	font-size: 18px
@@ -464,17 +484,6 @@ export default {
 				width: 36px
 				height: 36px
 				margin-right: 6px
-		.sort-tracks
-			margin-right: 8px
-			display: flex
-			.bunt-button-text
-				display: flex
-				align-items: center
-				padding-right: 8px
-			svg
-				width: 22px
-				height: 22px
-				margin-right: 6px
 		.bunt-select
 			max-width: 150px
 			padding-right: 8px
@@ -482,8 +491,8 @@ export default {
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
-		.bunt-select, .timezone-label
-			margin-left: auto
+		// .bunt-select, .timezone-label
+		// 	margin-left: auto
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
@@ -561,3 +570,4 @@ export default {
 	cursor: pointer;
 }
 </style>
+	
