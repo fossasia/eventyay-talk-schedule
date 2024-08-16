@@ -151,7 +151,11 @@ export default {
 			],
 			selectedSort: 'time',
 			showSortOptions: false,
-			selectedSortIcon: ''
+			selectedSortIcon: '',
+			onHomeServer: false,
+			loggedIn: false,
+			apiUrl: null,
+			translationMessages: {},
 		}
 	},
 	computed: {
@@ -286,6 +290,7 @@ export default {
 		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
 		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.rooms.data = roomData
+		this.apiUrl = this.eventUrl.split('/').slice(0, 3).join('/') + '/api/events/' + this.eventSlug + '/'
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
@@ -327,6 +332,15 @@ export default {
 		} else { // scrolling document
 			window.addEventListener('resize', this.onWindowResize)
 			this.onWindowResize()
+		}
+		/* global PRETALX_MESSAGES */
+		if (typeof PRETALX_MESSAGES !== 'undefined') {
+			this.translationMessages = PRETALX_MESSAGES
+			// this variable being present indicates that we're running on our home instance rather than as an embedded widget elsewhere
+			this.onHomeServer = true
+			if (document.querySelector("#pretalx-messages")?.dataset.loggedIn) {
+				this.loggedIn = true
+			}
 		}
 	},
 	destroyed () {
@@ -381,6 +395,8 @@ export default {
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
 			const talkIds = talks.map(e => e.code)
+			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
+			// we want it to still be faved
 			return favs.filter(e => talkIds.includes(e))
 		},
 		closeModal () {
