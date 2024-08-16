@@ -201,13 +201,13 @@ export default {
 					id: session.code,
 					title: session.title,
 					abstract: session.abstract,
+					do_not_record: session.do_not_record,
 					start: moment.tz(session.start, this.currentTimezone),
 					end: moment.tz(session.end, this.currentTimezone),
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
 					fav_count: session.fav_count,
-					do_not_record: session.do_not_record,
 					tags: session.tags
 				})
 			}

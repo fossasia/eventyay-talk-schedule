@@ -16,11 +16,6 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 					.speaker-info(:key="speaker.code")
 						img(v-if="speaker.avatar", :src="speaker.avatar")
 						.names {{ speaker.name }}
-		.do_not_record
-			svg(v-if="session.do_not_record", viewBox="0 -1 24 24", width="22px", height="22px", fill="none", xmlns="http://www.w3.org/2000/svg")
-				path(d="M1.29292 20.2929C0.902398 20.6834 0.902398 21.3166 1.29292 21.7071C1.68345 22.0976 2.31661 22.0976 2.70714 21.7071L22.7071 1.70711C23.0977 1.31658 23.0977 0.68342 22.7071 0.29289C22.3166 -0.097631 21.6834 -0.097631 21.2929 0.29289L20.2975 1.28829C20.296 1.28982 20.2944 1.29135 20.2929 1.29289L2.29289 19.2929C2.29136 19.2944 2.28984 19.296 2.28832 19.2975L1.29292 20.2929z", fill="#758CA3")
-				path(d="M15 3C15.2339 3 15.4615 3.02676 15.68 3.07739L13.7574 5H3C2.44772 5 2 5.44771 2 6V16C2 16.2142 2.06734 16.4126 2.182 16.5754L0.87868 17.8787C0.839067 17.9183 0.800794 17.9587 0.76386 18C0.28884 17.4692 0 16.7683 0 16V6C0 4.34314 1.34315 3 3 3H15z", fill="#758CA3")
-				path(d="M10.2426 17H15C15.5523 17 16 16.5523 16 16V14.0233C15.9996 14.0079 15.9996 13.9924 16 13.9769V11.2426L18 9.2426V13.2792L22 14.6126V7.38742L18.7828 8.45982L21.9451 5.29754L22.6838 5.05132C23.3313 4.83547 24 5.31744 24 6V16C24 16.6826 23.3313 17.1645 22.6838 16.9487L18 15.3874V16C18 17.6569 16.6569 19 15 19H8.24264L10.2426 17z", fill="#758CA3")
 		.tags-box
 			.tags(v-for="tag_item of session.tags", :key="tag_item.id")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
@@ -28,10 +23,16 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
+	.session-icons
 		.fav-count(v-if="session.fav_count > 0 && isLinearSchedule") {{ session.fav_count > 99 ? "99+" : session.fav_count  }}
-	bunt-icon-button.btn-fav-container(@click.prevent.stop="faved ? $emit('unfav', session.id) : $emit('fav', session.id)")
-		svg.star(viewBox="0 0 24 24")
-			path(d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z")
+		bunt-icon-button.btn-fav-container(@click.prevent.stop="faved ? $emit('unfav', session.id) : $emit('fav', session.id)")
+			svg.star(viewBox="0 0 24 24")
+				path(d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z")
+		svg.do-not-record(v-if="session.do_not_record", viewBox="0 0 116.59076 116.59076", width="4116.59076mm", height="116.59076mm", fill="none", xmlns="http://www.w3.org/2000/svg")
+			g(transform="translate(-9.3465481,-5.441411)")
+				rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
+				path(style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:18.7997;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="M 99.787546,47.04792 V 80.425654 L 77.727407,63.736793 Z")
+				path(style="fill:none;stroke:#b23e65;stroke-width:12;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", d="m 35.553146,95.825578 64.177559,-64.17757 m 16.294055,32.08879 A 48.382828,48.382828 0 0 1 67.641925,112.11961 48.382828,48.382828 0 0 1 19.259099,63.736798 48.382828,48.382828 0 0 1 67.641925,15.353968 48.382828,48.382828 0 0 1 116.02476,63.736798 Z")
 
 </template>
 <script>
@@ -243,17 +244,31 @@ export default {
 				text-align: right
 				color: $clr-secondary-text-light
 				ellipsis()
-	.btn-fav-container
-		display: none
+	.do-not-record
+		width: 24px
+		height: 24px
+	.session-icons
 		position: absolute
 		top: 2px
 		right: 2px
-		icon-button-style(style: clear)
-		svg path
-			fill: none
-			stroke: $clr-primary-text-light
-			stroke-width: 1px
-			vector-effect: non-scaling-stroke
+		display: flex
+		.do-not-record
+			padding: 6px 6px 6px 0
+		.btn-fav-container
+			margin-top: 2px
+			display: none
+			icon-button-style(style: clear)
+			padding: 2px
+			width: 32px
+			height: 32px
+			svg
+				height: 20px
+				width: 20px
+				path
+					fill: none
+					stroke: $clr-primary-text-light
+					stroke-width: 1px
+					vector-effect: non-scaling-stroke
 	&.faved
 		.btn-fav-container
 			display: inline-flex
@@ -272,9 +287,7 @@ export default {
 	.fav-count
 		border: 1px solid
 		border-radius: 50%
-		position: absolute
-		top: 5px
-		right: 40px
+		margin-top: 5px
 		width: 25px
 		height: 25px
 		display: flex
@@ -284,8 +297,6 @@ export default {
 		background-color: var(--track-color)
 		color: $clr-primary-text-dark
 
-	.do_not_record
-		margin: 10px 0px
 	.tags-box
 		display: flex
 		margin: 5px 0px
