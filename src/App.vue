@@ -450,11 +450,9 @@ export default {
 				await this.saveFavs()
 			}
 			if (this.loggedIn) {
-				try {
-					this.apiRequest(`submissions/${id}/favourite/`, 'POST')
-				} catch {
+				this.apiRequest(`submissions/${id}/favourite/`, 'POST').catch(e => {
 					this.pushErrorMessage(this.translationMessages.favs_not_saved || this.translationMessages.not_saved)
-				}
+				})
 			} else {
 				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
 			}
