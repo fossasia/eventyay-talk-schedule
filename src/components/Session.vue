@@ -25,8 +25,8 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 	.session-icons
 		.fav-count(v-if="session.fav_count > 0 && isLinearSchedule") {{ session.fav_count > 99 ? "99+" : session.fav_count  }}
-		bunt-icon-button.btn-fav-container(@click.prevent.stop="faved ? $emit('unfav', session.id) : $emit('fav', session.id)")
-			svg.star(viewBox="0 0 24 24")
+		bunt-icon-button.btn-fav-container(@click.prevent.stop="toggleFav")
+			svg.star(viewBox="0 0 24 24", ref="star")
 				path(d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z")
 		svg.do-not-record(v-if="session.do_not_record", viewBox="0 0 116.59076 116.59076", width="4116.59076mm", height="116.59076mm", fill="none", xmlns="http://www.w3.org/2000/svg")
 			g(transform="translate(-9.3465481,-5.441411)")
@@ -133,6 +133,17 @@ export default {
 
 			// If the brightness is over 128, return black. Otherwise, return white
 			return brightness > 128 ? 'black' : 'white'
+		},
+		toggleFav () {
+			if (this.faved) {
+				this.$emit('unfav', this.session.id)
+			} else {
+				this.$emit('fav', this.session.id)
+			}
+			this.$refs.star.classList.add('rotate-star')
+			setTimeout(() => {
+				this.$refs.star.classList.remove('rotate-star')
+			}, 400)
 		}
 	}
 }
@@ -261,19 +272,19 @@ export default {
 			padding: 2px
 			width: 32px
 			height: 32px
-			svg
+			svg.star
 				height: 20px
 				width: 20px
 				path
 					fill: none
-					stroke: $clr-primary-text-light
+					stroke: #ffa000
 					stroke-width: 1px
 					vector-effect: non-scaling-stroke
 	&.faved
 		.btn-fav-container
 			display: inline-flex
-			svg path
-				fill: $clr-primary-text-light
+			svg.star path
+				fill: #ffa000
 	&:hover
 		.info
 			border: 1px solid var(--track-color)
@@ -304,4 +315,11 @@ export default {
 			margin: 0px 2px
 			.tag-item
 				padding: 3px
+	svg.star.rotate-star
+		animation: rotate 0.4s
+	@keyframes rotate
+		0%
+			transform: rotate(0deg)
+		100%
+			transform: rotate(72deg)
 </style>
