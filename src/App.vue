@@ -72,6 +72,10 @@
 				.modal-footer
 					.button(@click="closeModal") OK
 	bunt-progress-circular(v-else, size="huge", :page="true")
+	.error-messages(v-if="errorMessages.length")
+		.error-message(v-for="message in errorMessages", :key="message")
+			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
+			div.message {{ message }}
 </template>
 <script>
 import Vue from 'vue'
@@ -156,6 +160,7 @@ export default {
 			loggedIn: false,
 			apiUrl: null,
 			translationMessages: {},
+			errorMessages: [],
 		}
 	},
 	computed: {
@@ -391,6 +396,10 @@ export default {
 				}
 			}
 			return []
+		},
+		pushErrorMessage (message) {
+			if (this.errorMessages.includes(message)) return
+			this.errorMessages.push(message)
 		},
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
@@ -660,4 +669,35 @@ export default {
 
   }
 
+.error-messages
+	position: fixed
+	width: 250px
+	bottom: 0
+	right: 0
+	padding: 12px
+	z-index: 1000
+	.error-message
+		padding: 8px
+		color: $clr-danger
+		background-color: $clr-white
+		border: 2px solid $clr-danger
+		border-radius: 6px
+		box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+		margin-top: 8px
+		position: relative
+		.btn
+			border: 1px solid $clr-danger
+			border-radius: 2px
+			box-shadow: 1px 1px 2px rgba(0,0,0,0.2)
+			width: 18px
+			height: 18px
+			position: absolute
+			top: 4px
+			right: 4px
+			display: flex
+			justify-content: center
+			align-items: center
+			cursor: pointer
+		.message
+			margin-right: 22px
 </style>
