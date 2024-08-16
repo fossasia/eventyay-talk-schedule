@@ -283,8 +283,10 @@ export default {
 	&.faved
 		.btn-fav-container
 			display: inline-flex
-			svg.star path
-				fill: #ffa000
+			svg.star
+				filter: drop-shadow(0 0 2px rgba(0 0 0 0.17))
+				path
+					fill: #ffa000
 	&:hover
 		.info
 			border: 1px solid var(--track-color)
