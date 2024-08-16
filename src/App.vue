@@ -295,7 +295,8 @@ export default {
 		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
 		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.rooms.data = roomData
-		this.apiUrl = this.eventUrl.split('/').slice(0, 3).join('/') + '/api/events/' + this.eventSlug + '/'
+		this.apiUrl = window.location.origin + '/api/events/' + this.eventSlug + '/'
+		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
@@ -309,7 +310,6 @@ export default {
 			}
 		})
 
-		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment(fragment, 'YYYY-MM-DD')
@@ -343,7 +343,7 @@ export default {
 			this.translationMessages = PRETALX_MESSAGES
 			// this variable being present indicates that we're running on our home instance rather than as an embedded widget elsewhere
 			this.onHomeServer = true
-			if (document.querySelector("#pretalx-messages")?.dataset.loggedIn) {
+			if (document.querySelector('#pretalx-messages')?.dataset.loggedIn === 'true') {
 				this.loggedIn = true
 			}
 		}
@@ -366,38 +366,49 @@ export default {
 		onScrollParentResize (entries) {
 			this.scrollParentWidth = entries[0].contentRect.width
 		},
+		async apiRequest (path, method, data) {
+			const url = `${this.apiUrl}${path}`
+			const headers = new Headers()
+			headers.append('Content-Type', 'application/json')
+			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', document.cookie.split('pretalx_csrftoken=').pop().split(';').shift())
+			const response = await fetch(url, {
+				method,
+				headers,
+				body: JSON.stringify(data),
+				credentials: 'same-origin'
+			})
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`)
+			}
+			return response.json()
+		},
 		async loadFavs () {
-			const dataCached = localStorage.getItem(`${this.eventSlug}_favs`)
-			let userData = []
-			try {
-				// Remove event slug to get correct talk domain
-				const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
-				userData = await (await fetch(`${baseUrl}api/events/${this.eventSlug}/favourite-talk/`,
-						{
-							method: 'GET',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						})).json()
-			} catch (e) {
-				console.error('error happened when trying to load favourite talk')
-			}
-			let data
-			if (userData.length !== 0) {
-				data = JSON.stringify(userData)
-			} else {
-				data = dataCached
-			}
+			const data = localStorage.getItem(`${this.eventSlug}_favs`)
+			let favs = []
 			if (data) {
 				try {
-					return JSON.parse(data)
+					favs = JSON.parse(data) || []
 				} catch {
 					localStorage.setItem(`${this.eventSlug}_favs`, '[]')
 				}
 			}
-			return []
+			if (this.loggedIn) {
+				try {
+					favs = await this.apiRequest('submissions/favourites/', 'GET').then(data => {
+						const toFav = favs.filter(e => !data.includes(e))
+						toFav.forEach(e => this.apiRequest(`submissions/${e}/favourite/`, 'POST').catch())
+						return data
+					}).catch(e => {
+						this.pushErrorMessage(this.translationMessages.favs_not_loaded || this.translationMessages.not_loaded)
+					})
+				} catch (e) {
+					this.pushErrorMessage(this.translationMessages.favs_not_loaded || this.translationMessages.not_loaded)
+				}
+			}
+			return favs
 		},
 		pushErrorMessage (message) {
+			if (!message || !message.length) return
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
 		},
@@ -438,10 +449,26 @@ export default {
 				this.favs.push(id)
 				await this.saveFavs()
 			}
+			if (this.loggedIn) {
+				try {
+					this.apiRequest(`submissions/${id}/favourite/`, 'POST')
+				} catch {
+					this.pushErrorMessage(this.translationMessages.favs_not_saved || this.translationMessages.not_saved)
+				}
+			} else {
+				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
+			}
 		},
 		async unfav (id) {
 			this.favs = this.favs.filter(elem => elem !== id)
-			await this.saveFavs()
+			this.saveFavs()
+			if (this.loggedIn) {
+				this.apiRequest(`submissions/${id}/favourite/`, 'DELETE').catch(e => {
+					this.pushErrorMessage(this.translationMessages.favs_not_saved || this.translationMessages.not_saved)
+				})
+			} else {
+				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
+			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
 		resetAllFiltered () {
