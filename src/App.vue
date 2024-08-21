@@ -256,8 +256,12 @@ export default {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		this.filter.tracks.data = this.schedule.tracks.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
-		this.filter.rooms.data = this.schedule.rooms.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
+		let trackData = JSON.parse(JSON.stringify(this.schedule.tracks))
+		trackData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
+		this.filter.tracks.data = trackData
+		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
+		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
+		this.filter.rooms.data = roomData
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
@@ -526,7 +530,7 @@ export default {
 	height: 100%;
 	z-index: 999;
 }
-					
+
 .modal-content {
 	background-color: white;
 	padding: 20px;
@@ -536,21 +540,21 @@ export default {
 	position: relative;
 	border: 1px solid var(--pretalx-clr-primary);
 }
-	
+
 .modal-header {
 	margin-bottom: 10px;
 }
-	
+
 .modal-title {
 	margin: 0;
 	font-size: 1.25em;
 	color: var(--pretalx-clr-primary);
 }
-	
+
 .modal-body {
 	margin-bottom: 20px;
 }
-	
+
 .modal-footer {
 	display: flex;
 	justify-content: flex-end;
@@ -561,7 +565,7 @@ export default {
 		border-radius: 5px;
 	}
 }
-	
+
 .modal-footer button {
 	background-color: transparent;
 	border: 1px solid #ccc;
@@ -570,4 +574,3 @@ export default {
 	cursor: pointer;
 }
 </style>
-	

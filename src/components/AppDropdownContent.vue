@@ -26,6 +26,8 @@ export default {
   border: 1px solid rgba(0, 0, 0, 0.38);
   border-radius: 5px;
   max-width: calc(100% - 40px);
+  max-height: 350px;
+  overflow-y: auto;
 }
 .dropdown-content .checkbox-line {
   margin: 8px;
