@@ -1,6 +1,6 @@
 <template lang="pug">
 .c-linear-schedule(v-scrollbar.y="")
-	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
+	.bucket(v-if="sortBy == 'time'", v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.format()")
 			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'day') > 0")  {{ date.format('dddd DD. MMMM') }}
 			.time {{ date.format('LT') }}
@@ -15,6 +15,18 @@
 				)
 				.break(v-else)
 					.title {{ getLocalizedString(session.title) }}
+	.bucket(v-if="sortBy == 'popularity' || sortBy == 'title'", v-for="session of sessionBuckets")
+		.sorted-session
+			session(
+				v-if="isProperSession(session)",
+				:session="session",
+				:faved="session.id && favs.includes(session.id)",
+				@fav="$emit('fav', session.id)",
+				@unfav="$emit('unfav', session.id)",
+				isLinearSchedule=true
+			)
+			.break(v-else)
+				.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
 import moment from 'moment-timezone'
@@ -46,52 +58,40 @@ export default {
 	},
 	computed: {
 		sessionBuckets () {
-			const buckets = {}
-			for (const session of this.sessions) {
-				const key = session.start.format()
-				if (!buckets[key]) {
-					buckets[key] = []
+			if (this.sortBy == 'time') {
+				const buckets = {}
+				for (const session of this.sessions) {
+					const key = session.start.format()
+					if (!buckets[key]) {
+						buckets[key] = []
+					}
+					if (!session.id) {
+						// Remove duplicate breaks, meaning same start, end and text
+						session.break_id = `${session.start}${session.end}${session.title}`
+						if (buckets[key].filter(s => s.break_id === session.break_id).length === 0) buckets[key].push(session)
+					} else {
+						buckets[key].push(session)
+					}
 				}
-				if (!session.id) {
-					// Remove duplicate breaks, meaning same start, end and text
-					session.break_id = `${session.start}${session.end}${session.title}`
-					if (buckets[key].filter(s => s.break_id === session.break_id).length === 0) buckets[key].push(session)
-				} else {
-					buckets[key].push(session)
-				}
-			}
 
-			return Object.entries(buckets).map(([date, sessions]) => {
-				let sessionBucket = {}
+				return Object.entries(buckets).map(([date, sessions]) => ({
+					date: sessions[0].start,
+					// sort by room for stable sort across time buckets
+					sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
+				}))	
+			} else {
+				let sortedSessions = this.sessions.slice().sort((a, b) => {
 				switch (this.sortBy) {
 					case 'title':
-						sessionBucket = {
-							date: sessions[0].start,
-							// sort by room for stable sort across time buckets
-							sessions: sessions.sort((a, b) => {
-								return a.title.localeCompare(b.title)
-							})
-						}
-						break
+						return a.title.localeCompare(b.title);
 					case 'popularity':
-						sessionBucket = {
-							date: sessions[0].start,
-							// sort by room for stable sort across time buckets
-							sessions: sessions.sort((a, b) => {
-								return b.fav_count - a.fav_count
-							})
-						}
-						break
+						return b.fav_count - a.fav_count;
 					default:
-						sessionBucket = {
-							date: sessions[0].start,
-							// sort by room for stable sort across time buckets
-							sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
-						}
+						return this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id);
 				}
-
-				return sessionBucket
-			})
+				})
+				return sortedSessions
+			}
 		}
 	},
 	watch: {
@@ -189,6 +189,8 @@ export default {
 			padding-left: 16px
 			.day
 				font-weight: 600
+		.sorted-session
+			padding-left: 16px
 		.break
 			z-index: 10
 			margin: 8px

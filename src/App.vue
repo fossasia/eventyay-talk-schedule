@@ -29,6 +29,7 @@
 					path(
 						d="M14.76 20.83L17.6 18l-2.84-2.83l1.41-1.41L19 16.57l2.83-2.81l1.41 1.41L20.43 18l2.81 2.83l-1.41 1.41L19 19.4l-2.83 2.84zM12 12v7.88c.04.3-.06.62-.29.83a.996.996 0 0 1-1.41 0L8.29 18.7a.99.99 0 0 1-.29-.83V12h-.03L2.21 4.62a1 1 0 0 1 .17-1.4c.19-.14.4-.22.62-.22h14c.22 0 .43.08.62.22a1 1 0 0 1 .17 1.4L12.03 12z"
 					)
+			bunt-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
 		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay && currentDay.format()", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 		grid-schedule(v-if="showGrid",
@@ -50,7 +51,8 @@
 			:favs="favs",
 			@changeDay="currentDay = $event",
 			@fav="fav($event)",
-			@unfav="unfav($event)")
+			@unfav="unfav($event)",
+			:sortBy="sortBy",)
 		.modal(v-if="showModal")
 			.modal-content
 				.modal-header
@@ -130,7 +132,11 @@ export default {
 					data: [],
 					title: 'Types'
 				}
-			}
+			},
+			sortOptions: [
+				{id: 'title', label: 'Title'}, {id: 'time', label: 'Time'}, {id: 'popularity', label: 'Popularity'}
+			],
+			selectedSort: 'time',
 		}
 	},
 	computed: {
@@ -226,6 +232,9 @@ export default {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
 			return url.pathname.replace(/\//g, '')
+		},
+		sortBy () {
+			return this.selectedSort
 		}
 	},
 	async created () {
@@ -468,6 +477,7 @@ export default {
 		margin-left: 10px
 		.fav-toggle
 			display: flex
+			margin-right: 5px
 			&.active
 				border: #FFA000 2px solid
 			.bunt-button-text

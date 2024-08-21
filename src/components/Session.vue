@@ -5,6 +5,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 			.time {{ startTime.time }}
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ getPrettyDuration(session.start, session.end) }}
+		.session-date {{ getPrettyDate(session.start) }}
 		.buffer
 		.is-live(v-if="isLive") live
 	.info
@@ -36,7 +37,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 <script>
 import moment from 'moment-timezone'
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration } from 'utils'
+import { getLocalizedString, getPrettyDuration, getPrettyDate } from 'utils'
 
 const markdownIt = MarkdownIt({
 	linkify: true,
@@ -81,7 +82,8 @@ export default {
 	data () {
 		return {
 			getPrettyDuration,
-			getLocalizedString
+			getLocalizedString,
+			getPrettyDate,
 		}
 	},
 	computed: {
@@ -151,7 +153,8 @@ export default {
 	color: $clr-primary-text-light
 	position: relative
 	.time-box
-		width: 69px
+		min-width: 75px
+		max-width: 75px
 		box-sizing: border-box
 		background-color: var(--track-color)
 		padding: 12px 16px 8px 12px
@@ -174,6 +177,14 @@ export default {
 				font-size: 13px
 		.duration
 			color: $clr-secondary-text-dark
+			margin-bottom: 8px
+		.session-date
+			color: $clr-primary-text-dark
+			font-size: 13px
+			font-weight: 600
+			display: flex
+			flex-direction: column
+			align-items: flex-end
 		.buffer
 			flex: auto
 		.is-live
