@@ -26,9 +26,9 @@
 					)
 				template {{ favs.length }}
 			template(v-if="!inEventTimezone")
-				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+				bunt-select.timezone-item(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
 			template(v-else)
-				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
+				div.timezone-label.timezone-item.bunt-tab-header-item {{ schedule.timezone }}
 			bunt-select.hide-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
 			bunt-button.sort-icon(@click="toggleSortOptions", tooltip="Sort By")
 				svg(viewBox="0 0 301.219 301.219")
@@ -555,9 +555,8 @@ export default {
 		display: flex
 		align-items: center
 		z-index: 100
-		width: 100%
-		flex-wrap: wrap
-		margin-left: 10px
+		left: 18px
+		width: min(calc(100% - 36px), var(--schedule-max-width))
 		.fav-toggle
 			display: flex
 			margin-right: 5px
@@ -588,8 +587,9 @@ export default {
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
-		// .bunt-select, .timezone-label
-		// 	margin-left: auto
+		.timezone-item
+			margin-left: auto
+			padding-right: 28px
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
