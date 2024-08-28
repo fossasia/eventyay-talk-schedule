@@ -556,7 +556,7 @@ export default {
 		align-items: center
 		z-index: 100
 		left: 18px
-		width: min(calc(100% - 36px), var(--schedule-max-width))
+		width: calc(100% - 36px)
 		.fav-toggle
 			display: flex
 			margin-right: 5px
@@ -589,7 +589,6 @@ export default {
 			color: $clr-secondary-text-light
 		.timezone-item
 			margin-left: auto
-			padding-right: 28px
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
