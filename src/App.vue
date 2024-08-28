@@ -24,12 +24,24 @@
 				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
 			template(v-else)
 				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
+			bunt-select.hide-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
+			bunt-button.sort-icon(@click="toggleSortOptions", tooltip="Sort By")
+				svg(viewBox="0 0 301.219 301.219")
+					path(d="M159.365,23.736v-10c0-5.523-4.477-10-10-10H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h139.365C154.888,33.736,159.365,29.259,159.365,23.736z")
+					path(d="M130.586,66.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h120.586c5.523,0,10-4.477,10-10v-10C140.586,71.213,136.109,66.736,130.586,66.736z")
+					path(d="M111.805,129.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h101.805c5.523,0,10-4.477,10-10v-10C121.805,134.213,117.328,129.736,111.805,129.736z")
+					path(d="M93.025,199.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h83.025c5.522,0,10-4.477,10-10v-10C103.025,204.213,98.548,199.736,93.025,199.736z")
+					path(d="M74.244,262.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h64.244c5.522,0,10-4.477,10-10v-10C84.244,267.213,79.767,262.736,74.244,262.736z")
+					path(d="M298.29,216.877l-7.071-7.071c-1.875-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.072,2.929l-34.393,34.393V18.736c0-5.523-4.477-10-10-10h-10c-5.523,0-10,4.477-10,10v225.462l-34.393-34.393c-1.876-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.071,2.929l-7.072,7.071c-3.904,3.905-3.904,10.237,0,14.142l63.536,63.536c1.953,1.953,4.512,2.929,7.071,2.929c2.559,0,5.119-0.976,7.071-2.929l63.536-63.536C302.195,227.113,302.195,220.781,298.29,216.877z")
+				div.dropdown-sort-menu(v-if="showSortOptions" @click.stop v-on-clickaway="toggleSortOptions")
+					div(v-for="sort in sortOptions" style="display:flex" )
+						input(type="radio" :name="sort.label", v-model="selectedSortIcon", :value="sort.id" @change="handleSortSelected")
+						label {{ sort.id }}
 			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
 				svg(viewBox="0 0 24 24")
 					path(
 						d="M14.76 20.83L17.6 18l-2.84-2.83l1.41-1.41L19 16.57l2.83-2.81l1.41 1.41L20.43 18l2.81 2.83l-1.41 1.41L19 19.4l-2.83 2.84zM12 12v7.88c.04.3-.06.62-.29.83a.996.996 0 0 1-1.41 0L8.29 18.7a.99.99 0 0 1-.29-.83V12h-.03L2.21 4.62a1 1 0 0 1 .17-1.4c.19-.14.4-.22.62-.22h14c.22 0 .43.08.62.22a1 1 0 0 1 .17 1.4L12.03 12z"
 					)
-			bunt-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
 		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay && currentDay.format()", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 		grid-schedule(v-if="showGrid",
@@ -64,6 +76,7 @@
 </template>
 <script>
 import Vue from 'vue'
+import { mixin as clickaway } from 'vue-clickaway'
 import Buntpapier from 'buntpapier'
 import moment from 'moment-timezone'
 import LinearSchedule from 'components/LinearSchedule'
@@ -77,6 +90,7 @@ Vue.use(Buntpapier)
 
 export default {
 	name: 'PretalxSchedule',
+	mixins: [clickaway],
 	components: { LinearSchedule, GridSchedule, AppDropdown, AppDropdownContent, AppDropdownItem },
 	props: {
 		eventUrl: String,
@@ -137,6 +151,8 @@ export default {
 				{id: 'title', label: 'Title'}, {id: 'time', label: 'Time'}, {id: 'popularity', label: 'Popularity'}
 			],
 			selectedSort: 'time',
+			showSortOptions: false,
+			selectedSortIcon: ''
 		}
 	},
 	computed: {
@@ -144,7 +160,8 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
 		},
 		showGrid () {
-			return this.format !== 'list' // if we can't fit two rooms together, switch to list
+			// return this.format !== 'list' // if we can't fit two rooms together, switch to list
+			return false
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
@@ -414,6 +431,12 @@ export default {
 					}
 				})
 			})
+		},
+		toggleSortOptions() {
+			this.showSortOptions = !this.showSortOptions;
+		},
+		handleSortSelected() {
+			this.selectedSort = this.selectedSortIcon;
 		}
 	}
 }
@@ -583,4 +606,42 @@ export default {
 	padding: 5px 10px;
 	cursor: pointer;
 }
+
+.sort-icon {
+	display: none !important
+}
+
+@media (max-width: 480px) {
+	.hide-select {
+		display: none
+	}
+    .sort-icon {
+      display: flex !important;
+      align-items: center;
+	  padding: 0 !important;
+	  min-width: 40px !important;
+	  margin-right: 10px;
+	  width: 40px !important;
+    }
+
+	.sort-icon .bunt-button-text {
+		display: flex
+		align-items: center
+		width: 20px;
+	}
+	.sort-icon .bunt-button-text svg {
+		width: 20px
+		height: 20px
+		position: absolute
+	}
+	.dropdown-sort-menu {
+		background: white;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		transform: translate(-7%, 68%);
+		min-width: 150px !important;
+	}
+
+  }
+
 </style>
