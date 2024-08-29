@@ -12,7 +12,6 @@
 					app-dropdown-item(v-for="track in item.data", :key="track.value")
 						.checkbox-line(:style="{'--track-color': track.color}")
 							bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
-							.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFiltered()", :class="onlyFavs ? ['active'] : []")
 				svg#star(viewBox="0 0 24 24")
 					polygon(

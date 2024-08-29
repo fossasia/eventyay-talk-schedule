@@ -47,7 +47,8 @@ export default {
 
 @media screen and (max-width: 480px) {
   .dropdown-content {
-    left: 5px;
+    /* left: 5px; */
+    max-width: 50%;
     z-index: 10;
   }
 }
