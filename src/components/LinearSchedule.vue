@@ -29,6 +29,7 @@
 				.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
+import _ from 'lodash'
 import moment from 'moment-timezone'
 import { getLocalizedString } from 'utils'
 import Session from './Session'
@@ -58,7 +59,7 @@ export default {
 	},
 	computed: {
 		sessionBuckets () {
-			if (this.sortBy == 'time') {
+			if (this.sortBy === 'time') {
 				const buckets = {}
 				for (const session of this.sessions) {
 					const key = session.start.format()
@@ -68,7 +69,7 @@ export default {
 					if (!session.id) {
 						// Remove duplicate breaks, meaning same start, end and text
 						session.break_id = `${session.start}${session.end}${session.title}`
-						if (buckets[key].filter(s => s.break_id === session.break_id).length === 0) buckets[key].push(session)
+						if (!buckets[key].some(s => s.break_id === session.break_id)) buckets[key].push(session)
 					} else {
 						buckets[key].push(session)
 					}
@@ -77,18 +78,18 @@ export default {
 				return Object.entries(buckets).map(([date, sessions]) => ({
 					date: sessions[0].start,
 					// sort by room for stable sort across time buckets
-					sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
-				}))	
+					sessions: _.sortBy(sessions, session => this.rooms.findIndex(room => room.id === session.room.id))
+				}))
 			} else {
-				let sortedSessions = this.sessions.slice().sort((a, b) => {
-				switch (this.sortBy) {
-					case 'title':
-						return a.title.localeCompare(b.title);
-					case 'popularity':
-						return b.fav_count - a.fav_count;
-					default:
-						return this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id);
-				}
+				const sortedSessions = this.sessions.slice().sort((a, b) => {
+					switch (this.sortBy) {
+						case 'title':
+							return a.title.localeCompare(b.title)
+						case 'popularity':
+							return b.fav_count - a.fav_count
+						default:
+							return _.sortBy(this.rooms, room => room.id === a.room.id) - _.sortBy(this.rooms, room => room.id === b.room.id)
+					}
 				})
 				return sortedSessions
 			}

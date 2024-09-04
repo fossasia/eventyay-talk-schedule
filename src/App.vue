@@ -5,7 +5,7 @@
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="schedule && sessions")
 		.settings
-			app-dropdown(v-for="item in filter")
+			app-dropdown(v-for="item in filter", :key="item.id", :lazy="true")
 				template(slot="toggler")
 					span {{item.title}}
 				app-dropdown-content
@@ -159,8 +159,7 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
 		},
 		showGrid () {
-			// return this.format !== 'list' // if we can't fit two rooms together, switch to list
-			return false
+			return this.format !== 'list' // if we can't fit two rooms together, switch to list
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
