@@ -59,40 +59,38 @@ export default {
 	},
 	computed: {
 		sessionBuckets () {
-			if (this.sortBy === 'time') {
-				const buckets = {}
-				for (const session of this.sessions) {
-					const key = session.start.format()
-					if (!buckets[key]) {
-						buckets[key] = []
+			let sortFunction = () => {}
+			switch(this.sortBy) {
+				case 'title':
+					sortFunction = (a, b) => a.title.localeCompare(b.title)
+					break
+				case 'popularity':
+					sortFunction = (a, b) => b.fav_count - a.fav_count
+					break
+				default:
+					// default will be sort by time
+					const buckets = {}
+					for (const session of this.sessions) {
+						const key = session.start.format()
+						if (!buckets[key]) {
+							buckets[key] = []
+						}
+						if (!session.id) {
+							// Remove duplicate breaks, meaning same start, end and text
+							session.break_id = `${session.start}${session.end}${session.title}`
+							if (!buckets[key].some(s => s.break_id === session.break_id)) buckets[key].push(session)
+						} else {
+							buckets[key].push(session)
+						}
 					}
-					if (!session.id) {
-						// Remove duplicate breaks, meaning same start, end and text
-						session.break_id = `${session.start}${session.end}${session.title}`
-						if (!buckets[key].some(s => s.break_id === session.break_id)) buckets[key].push(session)
-					} else {
-						buckets[key].push(session)
-					}
-				}
 
-				return Object.entries(buckets).map(([date, sessions]) => ({
-					date: sessions[0].start,
-					// sort by room for stable sort across time buckets
-					sessions: _.sortBy(sessions, session => this.rooms.findIndex(room => room.id === session.room.id))
-				}))
-			} else {
-				const sortedSessions = this.sessions.slice().sort((a, b) => {
-					switch (this.sortBy) {
-						case 'title':
-							return a.title.localeCompare(b.title)
-						case 'popularity':
-							return b.fav_count - a.fav_count
-						default:
-							return _.sortBy(this.rooms, room => room.id === a.room.id) - _.sortBy(this.rooms, room => room.id === b.room.id)
-					}
-				})
-				return sortedSessions
+					return Object.entries(buckets).map(([date, sessions]) => ({
+						date: sessions[0].start,
+						// sort by room for stable sort across time buckets
+						sessions: _.sortBy(sessions, session => this.rooms.findIndex(room => room.id === session.room.id))
+					}))
 			}
+			return this.sessions.slice().sort(sortFunction)
 		}
 	},
 	watch: {
