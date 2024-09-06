@@ -1,12 +1,13 @@
 <template lang="pug">
 .c-linear-schedule(v-scrollbar.y="")
-	.bucket(v-if="sortBy == 'time'", v-for="({date, sessions}, index) of sessionBuckets")
+	.bucket(v-if="sortBy == 'time'", v-for="({date, sessions}, index) of sessionBuckets", :key="date.format()")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.format()")
 			.day(v-if="index === 0 || date.clone().startOf('day').diff(sessionBuckets[index - 1].date.clone().startOf('day'), 'day') > 0")  {{ date.format('dddd DD. MMMM') }}
 			.time {{ date.format('LT') }}
 			template(v-for="session of sessions")
 				session(
 					v-if="isProperSession(session)",
+					:key="session.id"
 					:session="session",
 					:faved="session.id && favs.includes(session.id)",
 					@fav="$emit('fav', session.id)",
@@ -15,7 +16,7 @@
 				)
 				.break(v-else)
 					.title {{ getLocalizedString(session.title) }}
-	.bucket(v-if="sortBy == 'popularity' || sortBy == 'title'", v-for="session of sessionBuckets")
+	.bucket(v-if="sortBy == 'popularity' || sortBy == 'title'", v-for="session of sessionBuckets", :key="session.id")
 		.sorted-session
 			session(
 				v-if="isProperSession(session)",

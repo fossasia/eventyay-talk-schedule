@@ -13,7 +13,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 		.speakers(v-if="session.speakers")
 			.avatars
 				template(v-for="speaker of session.speakers")
-					.speaker-info
+					.speaker-info(:key="speaker.code")
 						img(v-if="speaker.avatar", :src="speaker.avatar")
 						.names {{ speaker.name }}
 		.do_not_record
@@ -22,7 +22,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 				path(d="M15 3C15.2339 3 15.4615 3.02676 15.68 3.07739L13.7574 5H3C2.44772 5 2 5.44771 2 6V16C2 16.2142 2.06734 16.4126 2.182 16.5754L0.87868 17.8787C0.839067 17.9183 0.800794 17.9587 0.76386 18C0.28884 17.4692 0 16.7683 0 16V6C0 4.34314 1.34315 3 3 3H15z", fill="#758CA3")
 				path(d="M10.2426 17H15C15.5523 17 16 16.5523 16 16V14.0233C15.9996 14.0079 15.9996 13.9924 16 13.9769V11.2426L18 9.2426V13.2792L22 14.6126V7.38742L18.7828 8.45982L21.9451 5.29754L22.6838 5.05132C23.3313 4.83547 24 5.31744 24 6V16C24 16.6826 23.3313 17.1645 22.6838 16.9487L18 15.3874V16C18 17.6569 16.6569 19 15 19H8.24264L10.2426 17z", fill="#758CA3")
 		.tags-box
-			.tags(v-for="tag_item of session.tags")
+			.tags(v-for="tag_item of session.tags", :key="tag_item.id")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
 		.abstract(v-if="showAbstract", v-html="abstract")
 		.bottom-info

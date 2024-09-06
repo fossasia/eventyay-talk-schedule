@@ -33,7 +33,7 @@
 					path(d="M74.244,262.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h64.244c5.522,0,10-4.477,10-10v-10C84.244,267.213,79.767,262.736,74.244,262.736z")
 					path(d="M298.29,216.877l-7.071-7.071c-1.875-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.072,2.929l-34.393,34.393V18.736c0-5.523-4.477-10-10-10h-10c-5.523,0-10,4.477-10,10v225.462l-34.393-34.393c-1.876-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.071,2.929l-7.072,7.071c-3.904,3.905-3.904,10.237,0,14.142l63.536,63.536c1.953,1.953,4.512,2.929,7.071,2.929c2.559,0,5.119-0.976,7.071-2.929l63.536-63.536C302.195,227.113,302.195,220.781,298.29,216.877z")
 				div.dropdown-sort-menu(v-if="showSortOptions" @click.stop v-on-clickaway="toggleSortOptions")
-					div(v-for="sort in sortOptions" style="display:flex" )
+					div(v-for="sort in sortOptions", :key="sort.id")
 						input(type="radio" :name="sort.label", v-model="selectedSortIcon", :value="sort.id" @change="handleSortSelected")
 						label {{ sort.id }}
 			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
