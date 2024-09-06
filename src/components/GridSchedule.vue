@@ -3,7 +3,7 @@
 	.grid(:style="gridStyle")
 		template(v-for="slice of visibleTimeslices")
 			.timeslice(:ref="slice.name", :key="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
-			.timeline(:class="getSliceClasses(slice)", :key="slice.name", :style="getSliceStyle(slice)")
+			.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 			svg(viewBox="0 0 10 10")
 				path(d="M 0 0 L 10 5 L 0 10 z")
