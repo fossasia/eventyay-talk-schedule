@@ -2,18 +2,19 @@
 .c-grid-schedule()
 	.grid(:style="gridStyle")
 		template(v-for="slice of visibleTimeslices")
-			.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+			.timeslice(:ref="slice.name", :key="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 			.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 			svg(viewBox="0 0 10 10")
 				path(d="M 0 0 L 10 5 L 0 10 z")
 		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
-		.room(v-for="(room, index) of rooms", :style="{'grid-area': `1 / ${index + 2 } / auto / auto`}") {{ getLocalizedString(room.name) }}
+		.room(v-for="(room, index) of rooms", :key="room.id", :style="{'grid-area': `1 / ${index + 2 } / auto / auto`}") {{ getLocalizedString(room.name) }}
 			bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
 		.room(v-if="hasSessionsWithoutRoom", :style="{'grid-area': `1 / ${rooms.length + 2} / auto / -1`}") no location
 		template(v-for="session of sessions")
 			session(
 				v-if="isProperSession(session)",
+				:key="session.id",
 				:session="session",
 				:style="getSessionStyle(session)",
 				:showAbstract="false", :showRoom="false",
@@ -190,7 +191,7 @@ export default {
 				}
 			})
 			// remove gap at the end of the schedule
-			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
+			if (compactedSlices && compactedSlices[compactedSlices.length - 1]?.gap) compactedSlices.pop()
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -330,6 +331,8 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
+	max-width: 100vw
+	overflow: auto
 	.grid
 		display: grid
 		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
@@ -338,7 +341,6 @@ export default {
 		min-width: min-content
 		> .room
 			position: sticky
-			top: calc(var(--pretalx-sticky-date-offset) + var(--pretalx-sticky-top-offset, 0px))
 			display: flex
 			justify-content: center
 			align-items: center

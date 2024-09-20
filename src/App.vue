@@ -4,21 +4,15 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="schedule && sessions")
-		.modal-overlay(v-if="showFilterModal", @click.stop="showFilterModal = false")
-			.modal-box(@click.stop="")
-				h3 Tracks
-				.checkbox-line(v-for="track in allTracks", :key="track.value", :style="{'--track-color': track.color}")
-					bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
-					.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 		.settings
-			bunt-button.filter-tracks(v-if="this.schedule.tracks.length", @click="showFilterModal=true")
-				svg#filter(viewBox="0 0 752 752")
-					path(d="m401.57 264.71h-174.75c-6.6289 0-11.84 5.2109-11.84 11.84 0 6.6289 5.2109 11.84 11.84 11.84h174.75c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h43.098c6.6289 0 11.84-5.2109 11.84-11.84 0-6.6289-5.2109-11.84-11.84-11.84h-43.098c-5.2109-17.523-21.312-30.309-40.254-30.309-19.414 0-35.516 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469c9.4727-0.003906 18.469 8.0469 18.469 18.469z")
-					path(d="m259.5 359.43h-32.676c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h32.676c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h185.17c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-185.17c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.73 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469-9.9453 0-18.469-8.0508-18.469-18.469s8.5234-18.469 18.469-18.469c9.9453 0 18.469 8.0508 18.469 18.469z")
-					path(d="m344.75 463.61h-117.92c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h117.92c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h99.926c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-99.926c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469 18.469 8.0508 18.469 18.469z")
-				template Filter
-				template(v-if="filteredTracks.length") ({{ filteredTracks.length }})
-			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()", :class="onlyFavs ? ['active'] : []")
+			app-dropdown(v-for="item in filter", :key="item.id", :lazy="true")
+				template(slot="toggler")
+					span {{item.title}}
+				app-dropdown-content
+					app-dropdown-item(v-for="track in item.data", :key="track.value")
+						.checkbox-line(:style="{'--track-color': track.color}")
+							bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
+			bunt-button.fav-toggle(v-if="favs.length", @click="onlyFavs = !onlyFavs; if (onlyFavs) resetFiltered()", :class="onlyFavs ? ['active'] : []")
 				svg#star(viewBox="0 0 24 24")
 					polygon(
 						:style="{fill: '#FFA000', stroke: '#FFA000'}"
@@ -26,9 +20,27 @@
 					)
 				template {{ favs.length }}
 			template(v-if="!inEventTimezone")
-				bunt-select(style="margin-left: 0px", name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
 			template(v-else)
 				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
+			bunt-select.hide-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
+			bunt-button.sort-icon(@click="toggleSortOptions", tooltip="Sort By")
+				svg(viewBox="0 0 301.219 301.219")
+					path(d="M159.365,23.736v-10c0-5.523-4.477-10-10-10H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h139.365C154.888,33.736,159.365,29.259,159.365,23.736z")
+					path(d="M130.586,66.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h120.586c5.523,0,10-4.477,10-10v-10C140.586,71.213,136.109,66.736,130.586,66.736z")
+					path(d="M111.805,129.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h101.805c5.523,0,10-4.477,10-10v-10C121.805,134.213,117.328,129.736,111.805,129.736z")
+					path(d="M93.025,199.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h83.025c5.522,0,10-4.477,10-10v-10C103.025,204.213,98.548,199.736,93.025,199.736z")
+					path(d="M74.244,262.736H10c-5.523,0-10,4.477-10,10v10c0,5.523,4.477,10,10,10h64.244c5.522,0,10-4.477,10-10v-10C84.244,267.213,79.767,262.736,74.244,262.736z")
+					path(d="M298.29,216.877l-7.071-7.071c-1.875-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.072,2.929l-34.393,34.393V18.736c0-5.523-4.477-10-10-10h-10c-5.523,0-10,4.477-10,10v225.462l-34.393-34.393c-1.876-1.875-4.419-2.929-7.071-2.929c-2.652,0-5.196,1.054-7.071,2.929l-7.072,7.071c-3.904,3.905-3.904,10.237,0,14.142l63.536,63.536c1.953,1.953,4.512,2.929,7.071,2.929c2.559,0,5.119-0.976,7.071-2.929l63.536-63.536C302.195,227.113,302.195,220.781,298.29,216.877z")
+				div.dropdown-sort-menu(v-if="showSortOptions" @click.stop v-on-clickaway="toggleSortOptions")
+					div(v-for="sort in sortOptions", :key="sort.id")
+						input(type="radio" :name="sort.label", v-model="selectedSortIcon", :value="sort.id" @change="handleSortSelected")
+						label {{ sort.id }}
+			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
+				svg(viewBox="0 0 24 24")
+					path(
+						d="M14.76 20.83L17.6 18l-2.84-2.83l1.41-1.41L19 16.57l2.83-2.81l1.41 1.41L20.43 18l2.81 2.83l-1.41 1.41L19 19.4l-2.83 2.84zM12 12v7.88c.04.3-.06.62-.29.83a.996.996 0 0 1-1.41 0L8.29 18.7a.99.99 0 0 1-.29-.83V12h-.03L2.21 4.62a1 1 0 0 1 .17-1.4c.19-.14.4-.22.62-.22h14c.22 0 .43.08.62.22a1 1 0 0 1 .17 1.4L12.03 12z"
+					)
 		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay && currentDay.format()", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.format()", :header="day.format(dateFormat)", @selected="changeDay(day)")
 		grid-schedule(v-if="showGrid",
@@ -48,10 +60,10 @@
 			:now="now",
 			:scrollParent="scrollParent",
 			:favs="favs",
-			:sortBy="sortBy",
 			@changeDay="currentDay = $event",
 			@fav="fav($event)",
-			@unfav="unfav($event)")
+			@unfav="unfav($event)",
+			:sortBy="sortBy",)
 		.modal(v-if="showModal")
 			.modal-content
 				.modal-header
@@ -63,17 +75,22 @@
 </template>
 <script>
 import Vue from 'vue'
+import { mixin as clickaway } from 'vue-clickaway'
 import Buntpapier from 'buntpapier'
 import moment from 'moment-timezone'
 import LinearSchedule from 'components/LinearSchedule'
 import GridSchedule from 'components/GridSchedule'
 import { findScrollParent, getLocalizedString } from 'utils'
+import AppDropdown from 'components/AppDropdown.vue'
+import AppDropdownContent from 'components/AppDropdownContent.vue'
+import AppDropdownItem from 'components/AppDropdownItem.vue'
 
 Vue.use(Buntpapier)
 
 export default {
 	name: 'PretalxSchedule',
-	components: { LinearSchedule, GridSchedule },
+	mixins: [clickaway],
+	components: { LinearSchedule, GridSchedule, AppDropdown, AppDropdownContent, AppDropdownItem },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -106,11 +123,35 @@ export default {
 			allTracks: [],
 			onlyFavs: false,
 			scheduleError: false,
+			selectedTracks: [],
+			showModal: false,
+			allRooms: [],
+			allSessionTypes: [],
+			selectedRooms: [],
+			selectedSessionTypes: [],
+			filter: {
+				tracks: {
+					refKey: 'track',
+					data: [],
+					title: 'Tracks'
+				},
+				rooms: {
+					refKey: 'room',
+					data: [],
+					title: 'Rooms'
+				},
+				types: {
+					refKey: 'session_type',
+					data: [],
+					title: 'Types'
+				}
+			},
 			sortOptions: [
-				{id: 'title', label: 'By Title'}, {id: 'time', label: 'By Time'}, {id: 'popularity', label: 'By Popularity'}
+				{id: 'title', label: 'Title'}, {id: 'time', label: 'Time'}, {id: 'popularity', label: 'Popularity'}
 			],
 			selectedSort: 'time',
-			showModal: false,
+			showSortOptions: false,
+			selectedSortIcon: ''
 		}
 	},
 	computed: {
@@ -118,7 +159,7 @@ export default {
 			return this.schedule ? Math.min(this.scrollParentWidth, 78 + this.schedule.rooms.length * 650) : this.scrollParentWidth
 		},
 		showGrid () {
-			return this.scrollParentWidth > 710 && this.format !== 'list' // if we can't fit two rooms together, switch to list
+			return this.format !== 'list' // if we can't fit two rooms together, switch to list
 		},
 		roomsLookup () {
 			if (!this.schedule) return {}
@@ -129,7 +170,21 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			return this.allTracks.filter(t => t.selected)
+			let results = null
+			Object.keys(this.filter).forEach(key => {
+				const refKey = this.filter[key].refKey
+				const selectedIds = this.filter[key].data.filter(t => t.selected).map(t => t.value)
+				let founds = null
+				if (selectedIds.length) {
+					if (results && results.length) {
+						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]) && results && results.includes(t.id))?.map(i => i.id) || []
+					} else {
+						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]))?.map(i => i.id) || []
+					}
+					results = founds
+				}
+			})
+			return results
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -138,9 +193,10 @@ export default {
 		sessions () {
 			if (!this.schedule || !this.currentTimezone) return
 			const sessions = []
+			const filter = this.filteredTracks
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
-				if (this.filteredTracks && this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
+				if (filter && !filter.includes(session.id)) continue
 				sessions.push({
 					id: session.code,
 					title: session.title,
@@ -191,12 +247,9 @@ export default {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
 			return url.pathname.replace(/\//g, '')
-			},
-			selectSortLabel () {
-				return this.sortOption?.find(el => el.id === this.selectedSort) ? this.sortOption.find(el => el.id === this.selectedSort).label : 'Sort By'
-			},
-			sortBy () {
-				return this.selectedSort
+		},
+		sortBy () {
+			return this.selectedSort
 		}
 	},
 	async created () {
@@ -227,7 +280,25 @@ export default {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		this.schedule.tracks.forEach(t => { t.value = t.id; t.label = getLocalizedString(t.name); this.allTracks.push(t) })
+		let trackData = JSON.parse(JSON.stringify(this.schedule.tracks))
+		trackData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
+		this.filter.tracks.data = trackData
+		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
+		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
+		this.filter.rooms.data = roomData
+
+		const obj = {}
+		this.schedule.talks.forEach(t => {
+			if (t.session_type && !obj[t.session_type]) {
+				obj[t.session_type] = true
+				const item = {
+					value: t.session_type,
+					label: (t.session_type)
+				}
+				this.filter.types.data.push(item)
+			}
+		})
+
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
@@ -312,23 +383,23 @@ export default {
 			const talkIds = talks.map(e => e.code)
 			return favs.filter(e => talkIds.includes(e))
 		},
-		closeModal() {
-			this.showModal = false;
+		closeModal () {
+			this.showModal = false
 		},
 		async saveFavs () {
 			try {
 				const response = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
-						{
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							},
-							body: JSON.stringify(this.favs)
-						}))				
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(this.favs)
+					}))
 				if (response.status === 400) {
 					const data = await response.json()
 					if (data === 'user_not_logged_in') {
-						this.showModal = true;
+						this.showModal = true
 						return
 					}
 				}
@@ -348,33 +419,30 @@ export default {
 			await this.saveFavs()
 			if (!this.favs.length) this.onlyFavs = false
 		},
-		resetFilteredTracks () {
-			this.allTracks.forEach(t => t.selected = false)
+		resetAllFiltered () {
+			this.resetFiltered()
+			this.onlyFavs = false
 		},
-		sortTrack (id) {
-			this.selectedSort = id
+		resetFiltered () {
+			Object.keys(this.filter).forEach(key => {
+				this.filter[key].data.forEach(t => {
+					if (t.selected) {
+						t.selected = false
+					}
+				})
+			})
+		},
+		toggleSortOptions() {
+			this.showSortOptions = !this.showSortOptions;
+		},
+		handleSortSelected() {
+			this.selectedSort = this.selectedSortIcon;
 		}
 	}
 }
 </script>
 <style lang="stylus">
 @import 'styles/global.styl'
-.bunt-drop-element
-	z-index: 99 !important
-.options
-	margin: 5px 0px
-	cursor pointer
-	padding: 5px
-	&:hover
-		background: #C7C7C7
-		color: white
-.bunt-drop-content
-	width: 124px
-	.bunt-popover-inner
-		border-color: #C7C7C7
-		border-radius: 4px
-		border: 1px solid
-		padding: 0px 10px
 .schedule-error
 	color: $clr-error
 	font-size: 18px
@@ -420,17 +488,19 @@ export default {
 					color: $clr-grey-600
 					margin-left: 32px
 	.settings
-		margin-left: 18px
+		max-width: calc(var(--schedule-max-width) - 10px)
+		position: sticky
+		left: 0
 		align-self: flex-start
 		display: flex
 		align-items: center
-		position: sticky
 		z-index: 100
-		left: 18px
-		width: min(calc(100vw - 36px), var(--schedule-max-width))
+		width: 100%
+		flex-wrap: wrap
+		margin-left: 10px
 		.fav-toggle
-			margin-right: 8px
 			display: flex
+			margin-right: 5px
 			&.active
 				border: #FFA000 2px solid
 			.bunt-button-text
@@ -451,25 +521,15 @@ export default {
 				width: 36px
 				height: 36px
 				margin-right: 6px
-		.sort-tracks
-			margin-right: 8px
-			display: flex
-			.bunt-button-text
-				display: flex
-				align-items: center
-				padding-right: 8px
-			svg
-				width: 22px
-				height: 22px
-				margin-right: 6px
 		.bunt-select
-			max-width: 300px
+			max-width: 150px
 			padding-right: 8px
+			margin-left: 5px
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
-		.bunt-select, .timezone-label
-			margin-left: auto
+		// .bunt-select, .timezone-label
+		// 	margin-left: auto
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
@@ -492,7 +552,6 @@ export default {
 				min-width: min-content
 			.bunt-tab-header-item-text
 				white-space: nowrap
-
 .modal {
 	display: flex;
 	justify-content: center;
@@ -504,7 +563,7 @@ export default {
 	height: 100%;
 	z-index: 999;
 }
-	
+
 .modal-content {
 	background-color: white;
 	padding: 20px;
@@ -514,26 +573,32 @@ export default {
 	position: relative;
 	border: 1px solid var(--pretalx-clr-primary);
 }
-	
+
 .modal-header {
 	margin-bottom: 10px;
 }
-	
+
 .modal-title {
 	margin: 0;
 	font-size: 1.25em;
 	color: var(--pretalx-clr-primary);
 }
-	
+
 .modal-body {
 	margin-bottom: 20px;
 }
-	
+
 .modal-footer {
 	display: flex;
 	justify-content: flex-end;
+	.button {
+		cursor:pointer;
+		border: 1px solid var(--pretalx-clr-primary)
+		padding: 2px 5px;
+		border-radius: 5px;
+	}
 }
-	
+
 .modal-footer button {
 	background-color: transparent;
 	border: 1px solid #ccc;
@@ -541,5 +606,42 @@ export default {
 	padding: 5px 10px;
 	cursor: pointer;
 }
+
+.sort-icon {
+	display: none !important
+}
+
+@media (max-width: 480px) {
+	.hide-select {
+		display: none
+	}
+    .sort-icon {
+      display: flex !important;
+      align-items: center;
+	  padding: 0 !important;
+	  min-width: 40px !important;
+	  margin-right: 10px;
+	  width: 40px !important;
+    }
+
+	.sort-icon .bunt-button-text {
+		display: flex
+		align-items: center
+		width: 20px;
+	}
+	.sort-icon .bunt-button-text svg {
+		width: 20px
+		height: 20px
+		position: absolute
+	}
+	.dropdown-sort-menu {
+		background: white;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		transform: translate(-7%, 68%);
+		min-width: 150px !important;
+	}
+
+  }
 
 </style>
