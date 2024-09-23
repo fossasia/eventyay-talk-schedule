@@ -177,9 +177,26 @@ export default {
 				let founds = null
 				if (selectedIds.length) {
 					if (results && results.length) {
-						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]) && results && results.includes(t.id))?.map(i => i.id) || []
+						founds = this.schedule.talks.filter(t => {
+							if (refKey === 'session_type') {
+								if (typeof t.session_type === 'string') {
+									return selectedIds.includes(t.session_type) && results.includes(t.id)
+								} else {
+									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key])) && results.includes(t.id)
+								}
+							}
+							return selectedIds.includes(t[refKey]) && results && results.includes(t.id)})?.map(i => i.id) || []
 					} else {
-						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]))?.map(i => i.id) || []
+						founds = this.schedule.talks.filter(t => {
+							if (refKey === 'session_type') {
+								if (typeof t.session_type === 'string') {
+									return selectedIds.includes(t.session_type)
+								} else {
+									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key]))
+								}
+							}
+							return selectedIds.includes(t[refKey])
+						})?.map(i => i.id) || []
 					}
 					results = founds
 				}
@@ -280,24 +297,45 @@ export default {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		let trackData = JSON.parse(JSON.stringify(this.schedule.tracks))
-		trackData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
-		this.filter.tracks.data = trackData
-		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
-		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
-		this.filter.rooms.data = roomData
 
-		const obj = {}
+		const setSessionType = new Set()
+		const enLanguage = 'en'
+
 		this.schedule.talks.forEach(t => {
-			if (t.session_type && !obj[t.session_type]) {
-				obj[t.session_type] = true
-				const item = {
-					value: t.session_type,
-					label: (t.session_type)
+			if (typeof t.session_type === 'string') {
+				setSessionType.add(t.session_type)
+			} else {
+				const sessionTypeKeyArray = Object.keys(t.session_type)
+				let isEnglish = false
+
+				for (let i = 0; i < sessionTypeKeyArray.length; i++) {
+					if (sessionTypeKeyArray[i] === this.getLanguage()) {
+						setSessionType.add(t.session_type[sessionTypeKeyArray[i]])
+						break
+					}
+					else if (sessionTypeKeyArray[i] === enLanguage) {
+						isEnglish = true
+						if (i === sessionTypeKeyArray.length - 1) {
+							setSessionType.add(t.session_type[enLanguage])
+						}
+					}
+					else {
+						if (i === sessionTypeKeyArray.length - 1) {
+							if (isEnglish) {
+								setSessionType.add(t.session_type[enLanguage])
+							}
+							else {
+								setSessionType.add(t.session_type[sessionTypeKeyArray[i]])
+							}
+						}
+					}
 				}
-				this.filter.types.data.push(item)
 			}
 		})
+
+		this.filter.types.data = Array.from(setSessionType).map(t => { return { value: t, label: t } })
+		this.filter.rooms.data = this.filterLanguage(this.schedule.rooms)
+		this.filter.tracks.data = this.filterLanguage(this.schedule.tracks)
 
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
@@ -337,6 +375,10 @@ export default {
 			if (day.isSame(this.currentDay)) return
 			this.currentDay = moment(day, this.currentTimezone).startOf('day')
 			window.location.hash = day.format('YYYY-MM-DD')
+		},
+		getLang () {
+			const lang = document.querySelector('html').lang || 'en'
+			return lang
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -435,7 +477,52 @@ export default {
 		},
 		handleSortSelected() {
 			this.selectedSort = this.selectedSortIcon;
+		},
+		getLanguage() {
+			const lang = document.querySelector('html').lang || 'en'
+			return lang
+		},
+		filterLanguage(data) {
+			const setMap = new Map()
+			const enLanguage = 'en'
+
+			data.forEach(
+				t => {
+					if (typeof t.name === 'string') {
+						setMap.set(t.id, t.name)
+					} else {
+						const keyArray = Object.keys(t.name)
+						let isEnglish = false
+
+						for (let i = 0; i < keyArray.length; i++) {
+							if (keyArray[i] === this.getLanguage()) {
+								setMap.set(t.id, t.name[keyArray[i]])
+								break
+							}
+							else if (keyArray[i] === enLanguage) {
+								isEnglish = true
+								if (i === keyArray.length - 1) {
+									setMap.set(t.id, t.name[enLanguage])
+								}
+							}
+							else {
+								if (i === keyArray.length - 1) {
+									if (isEnglish) {
+										setMap.set(t.id, t.name[enLanguage])
+									}
+									else {
+										setMap.set(t.id, t.name[keyArray[i]])
+									}
+								}
+							}
+						}
+					}
+				}
+			)
+
+			return Array.from(setMap).map(t => { return { value: t[0], label: t[1] } })
 		}
+
 	}
 }
 </script>
