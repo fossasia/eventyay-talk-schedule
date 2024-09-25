@@ -179,9 +179,9 @@ export default {
 					if (results && results.length) {
 						founds = this.schedule.talks.filter(t => {
 							if (refKey === 'session_type') {
-								if (typeof t.session_type === 'string') {
+								if (typeof t?.session_type === 'string') {
 									return selectedIds.includes(t.session_type) && results.includes(t.id)
-								} else {
+								} else if (typeof t?.session_type === 'object') {
 									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key])) && results.includes(t.id)
 								}
 							}
@@ -189,9 +189,9 @@ export default {
 					} else {
 						founds = this.schedule.talks.filter(t => {
 							if (refKey === 'session_type') {
-								if (typeof t.session_type === 'string') {
+								if (typeof t?.session_type === 'string') {
 									return selectedIds.includes(t.session_type)
-								} else {
+								} else if (typeof t?.session_type === 'object') {
 									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key]))
 								}
 							}
@@ -302,9 +302,9 @@ export default {
 		const enLanguage = 'en'
 
 		this.schedule.talks.forEach(t => {
-			if (typeof t.session_type === 'string') {
+			if (typeof t?.session_type === 'string') {
 				setSessionType.add(t.session_type)
-			} else {
+			} else if (typeof t?.session_type === 'object') {
 				const sessionTypeKeyArray = Object.keys(t.session_type)
 				let isEnglish = false
 
@@ -375,10 +375,6 @@ export default {
 			if (day.isSame(this.currentDay)) return
 			this.currentDay = moment(day, this.currentTimezone).startOf('day')
 			window.location.hash = day.format('YYYY-MM-DD')
-		},
-		getLang () {
-			const lang = document.querySelector('html').lang || 'en'
-			return lang
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
@@ -488,9 +484,9 @@ export default {
 
 			data.forEach(
 				t => {
-					if (typeof t.name === 'string') {
+					if (typeof t?.name === 'string') {
 						setMap.set(t.id, t.name)
-					} else {
+					} else if (typeof t?.name === 'object') {
 						const keyArray = Object.keys(t.name)
 						let isEnglish = false
 
