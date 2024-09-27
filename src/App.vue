@@ -80,7 +80,13 @@ import Buntpapier from 'buntpapier'
 import moment from 'moment-timezone'
 import LinearSchedule from 'components/LinearSchedule'
 import GridSchedule from 'components/GridSchedule'
-import { findScrollParent, getLocalizedString } from 'utils'
+import {
+	filterSessionTypesByLanguage,
+	findScrollParent,
+	getLocalizedString,
+	filterItemsByLanguage,
+	filteredSessions
+} from 'utils'
 import AppDropdown from 'components/AppDropdown.vue'
 import AppDropdownContent from 'components/AppDropdownContent.vue'
 import AppDropdownItem from 'components/AppDropdownItem.vue'
@@ -170,38 +176,7 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			let results = null
-			Object.keys(this.filter).forEach(key => {
-				const refKey = this.filter[key].refKey
-				const selectedIds = this.filter[key].data.filter(t => t.selected).map(t => t.value)
-				let founds = null
-				if (selectedIds.length) {
-					if (results && results.length) {
-						founds = this.schedule.talks.filter(t => {
-							if (refKey === 'session_type') {
-								if (typeof t?.session_type === 'string') {
-									return selectedIds.includes(t.session_type) && results.includes(t.id)
-								} else if (typeof t?.session_type === 'object') {
-									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key])) && results.includes(t.id)
-								}
-							}
-							return selectedIds.includes(t[refKey]) && results && results.includes(t.id)})?.map(i => i.id) || []
-					} else {
-						founds = this.schedule.talks.filter(t => {
-							if (refKey === 'session_type') {
-								if (typeof t?.session_type === 'string') {
-									return selectedIds.includes(t.session_type)
-								} else if (typeof t?.session_type === 'object') {
-									return Object.keys(t.session_type).some(key => selectedIds.includes(t.session_type[key]))
-								}
-							}
-							return selectedIds.includes(t[refKey])
-						})?.map(i => i.id) || []
-					}
-					results = founds
-				}
-			})
-			return results
+			return filteredSessions(this?.filter, this?.schedule?.talks)
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -298,44 +273,9 @@ export default {
 			this.onWindowResize()
 		}
 
-		const setSessionType = new Set()
-		const enLanguage = 'en'
-
-		this.schedule.talks.forEach(t => {
-			if (typeof t?.session_type === 'string') {
-				setSessionType.add(t.session_type)
-			} else if (typeof t?.session_type === 'object') {
-				const sessionTypeKeyArray = Object.keys(t.session_type)
-				let isEnglish = false
-
-				for (let i = 0; i < sessionTypeKeyArray.length; i++) {
-					if (sessionTypeKeyArray[i] === this.getLanguage()) {
-						setSessionType.add(t.session_type[sessionTypeKeyArray[i]])
-						break
-					}
-					else if (sessionTypeKeyArray[i] === enLanguage) {
-						isEnglish = true
-						if (i === sessionTypeKeyArray.length - 1) {
-							setSessionType.add(t.session_type[enLanguage])
-						}
-					}
-					else {
-						if (i === sessionTypeKeyArray.length - 1) {
-							if (isEnglish) {
-								setSessionType.add(t.session_type[enLanguage])
-							}
-							else {
-								setSessionType.add(t.session_type[sessionTypeKeyArray[i]])
-							}
-						}
-					}
-				}
-			}
-		})
-
-		this.filter.types.data = Array.from(setSessionType).map(t => { return { value: t, label: t } })
-		this.filter.rooms.data = this.filterLanguage(this.schedule.rooms)
-		this.filter.tracks.data = this.filterLanguage(this.schedule.tracks)
+		this.filter.types.data = filterSessionTypesByLanguage(this?.schedule?.talks)
+		this.filter.rooms.data = filterItemsByLanguage(this?.schedule?.rooms)
+		this.filter.tracks.data = filterItemsByLanguage(this?.schedule?.tracks)
 
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
@@ -473,52 +413,7 @@ export default {
 		},
 		handleSortSelected() {
 			this.selectedSort = this.selectedSortIcon;
-		},
-		getLanguage() {
-			const lang = document.querySelector('html').lang || 'en'
-			return lang
-		},
-		filterLanguage(data) {
-			const setMap = new Map()
-			const enLanguage = 'en'
-
-			data.forEach(
-				t => {
-					if (typeof t?.name === 'string') {
-						setMap.set(t.id, t.name)
-					} else if (typeof t?.name === 'object') {
-						const keyArray = Object.keys(t.name)
-						let isEnglish = false
-
-						for (let i = 0; i < keyArray.length; i++) {
-							if (keyArray[i] === this.getLanguage()) {
-								setMap.set(t.id, t.name[keyArray[i]])
-								break
-							}
-							else if (keyArray[i] === enLanguage) {
-								isEnglish = true
-								if (i === keyArray.length - 1) {
-									setMap.set(t.id, t.name[enLanguage])
-								}
-							}
-							else {
-								if (i === keyArray.length - 1) {
-									if (isEnglish) {
-										setMap.set(t.id, t.name[enLanguage])
-									}
-									else {
-										setMap.set(t.id, t.name[keyArray[i]])
-									}
-								}
-							}
-						}
-					}
-				}
-			)
-
-			return Array.from(setMap).map(t => { return { value: t[0], label: t[1] } })
 		}
-
 	}
 }
 </script>
