@@ -1,5 +1,5 @@
 // import i18n from 'i18n'
-import moment from 'moment';
+import moment from 'moment'
 
 export function getLocalizedString (string) {
 	if (!string) return ''
@@ -28,6 +28,6 @@ export function getPrettyDuration (start, end) {
 	return `${hours}h`
 }
 export function getPrettyDate (start) {
-    const date = moment(start);
-    return date.format('ddd DD. MMM');
+	const date = moment(start)
+	return date.format('ddd DD. MMM')
 }
