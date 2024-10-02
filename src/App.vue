@@ -246,7 +246,7 @@ export default {
 			} else {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
-			return url.pathname.replace(/\//g, '')
+			return url.pathname.split('/').filter(Boolean).pop();
 		},
 		sortBy () {
 			return this.selectedSort
@@ -388,7 +388,8 @@ export default {
 		},
 		async saveFavs () {
 			try {
-				const response = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
+				const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
+				const response = await (await fetch(`${baseUrl}api/events/${this.eventSlug}/favourite-talk/`,
 					{
 						method: 'POST',
 						headers: {
