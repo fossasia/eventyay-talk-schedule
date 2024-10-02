@@ -329,13 +329,15 @@ export default {
 			const dataCached = localStorage.getItem(`${this.eventSlug}_favs`)
 			let userData = []
 			try {
-				userData = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					})).json()
+				// Remove event slug to get correct talk domain
+				const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
+				userData = await (await fetch(`${baseUrl}api/events/${this.eventSlug}/favourite-talk/`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						})).json()
 			} catch (e) {
 				console.error('error happened when trying to load favourite talk')
 			}

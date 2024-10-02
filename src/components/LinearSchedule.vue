@@ -61,7 +61,7 @@ export default {
 	computed: {
 		sessionBuckets () {
 			let sortFunction = () => {}
-			switch(this.sortBy) {
+			switch (this.sortBy) {
 				case 'title':
 					sortFunction = (a, b) => a.title.localeCompare(b.title)
 					break

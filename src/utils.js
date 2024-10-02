@@ -1,5 +1,5 @@
 // import i18n from 'i18n'
-import moment from 'moment';
+import moment from 'moment'
 
 export function getLocalizedString(string) {
 	if (!string) return ''
@@ -134,4 +134,5 @@ export function filteredSessions(filter, data) {
 	})
 
 	return filteredResults
-}
+  
+
