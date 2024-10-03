@@ -122,11 +122,9 @@ export function filterTalk(talksData, refKey, selectedIds, previousResults) {
 export function filteredSessions(filter, data) {
 	let filteredResults = null
 
-	Object.keys(filter).forEach(key => {
-		const refKey = filter[key].refKey
-		const selectedIds = filter[key].data
-			.filter(item => item.selected)
-			.map(item => item.value) || []
+	Object.entries(filter).forEach(([key, value]) => {
+		const refKey = value.refKey
+		const selectedIds = value.data.flatMap(item => item.selected ? item.value : [])
 
 		if (selectedIds.length) {
 			filteredResults = filterTalk(data, refKey, selectedIds, filteredResults)
@@ -134,5 +132,5 @@ export function filteredSessions(filter, data) {
 	})
 
 	return filteredResults
-  
+}
 
