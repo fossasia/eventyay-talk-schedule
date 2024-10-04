@@ -25,10 +25,6 @@
 						points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 					)
 				template {{ favs.length }}
-			template(v-if="!inEventTimezone")
-				bunt-select.timezone-item(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
-			template(v-else)
-				div.timezone-label.timezone-item.bunt-tab-header-item {{ schedule.timezone }}
 			bunt-select.hide-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
 			bunt-button.sort-icon(@click="toggleSortOptions", tooltip="Sort By")
 				svg(viewBox="0 0 301.219 301.219")
@@ -42,6 +38,10 @@
 					div(v-for="sort in sortOptions", :key="sort.id")
 						input(type="radio" :name="sort.label", v-model="selectedSortIcon", :value="sort.id" @change="handleSortSelected")
 						label {{ sort.id }}
+			template(v-if="!inEventTimezone")
+				bunt-select.timezone-item(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+			template(v-else)
+				div.timezone-label.timezone-item.bunt-tab-header-item {{ schedule.timezone }}
 			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
 				svg(viewBox="0 0 24 24")
 					path(
@@ -552,6 +552,7 @@ export default {
 		position: sticky
 		left: 0
 		align-self: flex-start
+		flex-wrap: wrap
 		display: flex
 		align-items: center
 		z-index: 100
@@ -587,8 +588,6 @@ export default {
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
-		.timezone-item
-			margin-left: auto
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
@@ -699,6 +698,10 @@ export default {
 		border-radius: 4px;
 		transform: translate(-7%, 68%);
 		min-width: 150px !important;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+
 	}
 
   }
