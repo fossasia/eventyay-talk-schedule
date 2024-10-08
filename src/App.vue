@@ -3,7 +3,13 @@
 	template(v-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
-	template(v-else-if="schedule && sessions")
+	template(v-else-if="schedule && sessions.length")
+		.modal-overlay(v-if="showFilterModal", @click.stop="showFilterModal = false")
+			.modal-box(@click.stop="")
+				h3 Tracks
+				.checkbox-line(v-for="track in allTracks", :key="track.value", :style="{'--track-color': track.color}")
+					bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
+					.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 		.settings
 			app-dropdown(v-for="item in filter", :key="item.id", :lazy="true")
 				template(slot="toggler")
@@ -19,10 +25,6 @@
 						points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 					)
 				template {{ favs.length }}
-			template(v-if="!inEventTimezone")
-				bunt-select(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
-			template(v-else)
-				div.timezone-label.bunt-tab-header-item {{ schedule.timezone }}
 			bunt-select.hide-select(v-if="!showGrid" style="margin-left: 0px" name="sort" :options="sortOptions" v-model="selectedSort" label="Sort by")
 			bunt-button.sort-icon(@click="toggleSortOptions", tooltip="Sort By")
 				svg(viewBox="0 0 301.219 301.219")
@@ -36,6 +38,10 @@
 					div(v-for="sort in sortOptions", :key="sort.id")
 						input(type="radio" :name="sort.label", v-model="selectedSortIcon", :value="sort.id" @change="handleSortSelected")
 						label {{ sort.id }}
+			template(v-if="!inEventTimezone")
+				bunt-select.timezone-item(name="timezone", :options="[{id: schedule.timezone, label: schedule.timezone}, {id: userTimezone, label: userTimezone}]", v-model="currentTimezone", @blur="saveTimezone")
+			template(v-else)
+				div.timezone-label.timezone-item.bunt-tab-header-item {{ schedule.timezone }}
 			bunt-button.fav-toggle(@click="resetAllFiltered", tooltip="Clear All Filters")
 				svg(viewBox="0 0 24 24")
 					path(
@@ -72,6 +78,10 @@
 				.modal-footer
 					.button(@click="closeModal") OK
 	bunt-progress-circular(v-else, size="huge", :page="true")
+	.error-messages(v-if="errorMessages.length")
+		.error-message(v-for="message in errorMessages", :key="message")
+			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
+			div.message {{ message }}
 </template>
 <script>
 import Vue from 'vue'
@@ -151,7 +161,12 @@ export default {
 			],
 			selectedSort: 'time',
 			showSortOptions: false,
-			selectedSortIcon: ''
+			selectedSortIcon: '',
+			onHomeServer: false,
+			loggedIn: false,
+			apiUrl: null,
+			translationMessages: {},
+			errorMessages: [],
 		}
 	},
 	computed: {
@@ -201,13 +216,13 @@ export default {
 					id: session.code,
 					title: session.title,
 					abstract: session.abstract,
+					do_not_record: session.do_not_record,
 					start: moment.tz(session.start, this.currentTimezone),
 					end: moment.tz(session.end, this.currentTimezone),
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
 					fav_count: session.fav_count,
-					do_not_record: session.do_not_record,
 					tags: session.tags
 				})
 			}
@@ -227,7 +242,7 @@ export default {
 			return days
 		},
 		inEventTimezone () {
-			if (!this.schedule || !this.schedule.talks) return false
+			if (!this.schedule?.talks?.length) return false
 			const example = this.schedule.talks[0].start
 			return moment.tz(example, this.userTimezone).format('Z') === moment.tz(example, this.schedule.timezone).format('Z')
 		},
@@ -271,6 +286,10 @@ export default {
 				return
 			}
 		}
+		if (!this.schedule.talks.length) {
+			this.scheduleError = true
+			return
+		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
 		this.currentDay = this.days[0]
@@ -286,6 +305,8 @@ export default {
 		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
 		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.rooms.data = roomData
+		this.apiUrl = window.location.origin + '/api/events/' + this.eventSlug + '/'
+		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
 		const obj = {}
 		this.schedule.talks.forEach(t => {
@@ -299,7 +320,6 @@ export default {
 			}
 		})
 
-		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
 			const initialDay = moment(fragment, 'YYYY-MM-DD')
@@ -328,6 +348,15 @@ export default {
 			window.addEventListener('resize', this.onWindowResize)
 			this.onWindowResize()
 		}
+		/* global PRETALX_MESSAGES */
+		if (typeof PRETALX_MESSAGES !== 'undefined') {
+			this.translationMessages = PRETALX_MESSAGES
+			// this variable being present indicates that we're running on our home instance rather than as an embedded widget elsewhere
+			this.onHomeServer = true
+			if (document.querySelector('#pretalx-messages')?.dataset.loggedIn === 'true') {
+				this.loggedIn = true
+			}
+		}
 	},
 	destroyed () {
 		// TODO destroy observers
@@ -347,40 +376,57 @@ export default {
 		onScrollParentResize (entries) {
 			this.scrollParentWidth = entries[0].contentRect.width
 		},
+		async apiRequest (path, method, data) {
+			const url = `${this.apiUrl}${path}`
+			const headers = new Headers()
+			headers.append('Content-Type', 'application/json')
+			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', document.cookie.split('pretalx_csrftoken=').pop().split(';').shift())
+			const response = await fetch(url, {
+				method,
+				headers,
+				body: JSON.stringify(data),
+				credentials: 'same-origin'
+			})
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`)
+			}
+			return response.json()
+		},
 		async loadFavs () {
-			const dataCached = localStorage.getItem(`${this.eventSlug}_favs`)
-			let userData = []
-			try {
-				// Remove event slug to get correct talk domain
-				const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
-				userData = await (await fetch(`${baseUrl}api/events/${this.eventSlug}/favourite-talk/`,
-						{
-							method: 'GET',
-							headers: {
-								'Content-Type': 'application/json'
-							}
-						})).json()
-			} catch (e) {
-				console.error('error happened when trying to load favourite talk')
-			}
-			let data
-			if (userData.length !== 0) {
-				data = JSON.stringify(userData)
-			} else {
-				data = dataCached
-			}
+			const data = localStorage.getItem(`${this.eventSlug}_favs`)
+			let favs = []
 			if (data) {
 				try {
-					return JSON.parse(data)
+					favs = JSON.parse(data) || []
 				} catch {
 					localStorage.setItem(`${this.eventSlug}_favs`, '[]')
 				}
 			}
-			return []
+			if (this.loggedIn) {
+				try {
+					favs = await this.apiRequest('submissions/favourites/', 'GET').then(data => {
+						const toFav = favs.filter(e => !data.includes(e))
+						toFav.forEach(e => this.apiRequest(`submissions/${e}/favourite/`, 'POST').catch())
+						return data
+					}).catch(e => {
+						this.pushErrorMessage(this.translationMessages.favs_not_loaded || this.translationMessages.not_loaded)
+					})
+				} catch (e) {
+					this.pushErrorMessage(this.translationMessages.favs_not_loaded || this.translationMessages.not_loaded)
+				}
+			}
+			return favs
+		},
+		pushErrorMessage (message) {
+			if (!message || !message.length) return
+			if (this.errorMessages.includes(message)) return
+			this.errorMessages.push(message)
 		},
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
 			const talkIds = talks.map(e => e.code)
+			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
+			// we want it to still be faved
 			return favs.filter(e => talkIds.includes(e))
 		},
 		closeModal () {
@@ -413,10 +459,24 @@ export default {
 				this.favs.push(id)
 				await this.saveFavs()
 			}
+			if (this.loggedIn) {
+				this.apiRequest(`submissions/${id}/favourite/`, 'POST').catch(e => {
+					this.pushErrorMessage(this.translationMessages.favs_not_saved || this.translationMessages.not_saved)
+				})
+			} else {
+				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
+			}
 		},
 		async unfav (id) {
 			this.favs = this.favs.filter(elem => elem !== id)
-			await this.saveFavs()
+			this.saveFavs()
+			if (this.loggedIn) {
+				this.apiRequest(`submissions/${id}/favourite/`, 'DELETE').catch(e => {
+					this.pushErrorMessage(this.translationMessages.favs_not_saved || this.translationMessages.not_saved)
+				})
+			} else {
+				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
+			}
 			if (!this.favs.length) this.onlyFavs = false
 		},
 		resetAllFiltered () {
@@ -492,12 +552,12 @@ export default {
 		position: sticky
 		left: 0
 		align-self: flex-start
+		flex-wrap: wrap
 		display: flex
 		align-items: center
 		z-index: 100
-		width: 100%
-		flex-wrap: wrap
-		margin-left: 10px
+		left: 18px
+		width: calc(100% - 36px)
 		.fav-toggle
 			display: flex
 			margin-right: 5px
@@ -528,8 +588,6 @@ export default {
 		.timezone-label
 			cursor: default
 			color: $clr-secondary-text-light
-		// .bunt-select, .timezone-label
-		// 	margin-left: auto
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
@@ -640,8 +698,43 @@ export default {
 		border-radius: 4px;
 		transform: translate(-7%, 68%);
 		min-width: 150px !important;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+
 	}
 
   }
 
+.error-messages
+	position: fixed
+	width: 250px
+	bottom: 0
+	right: 0
+	padding: 12px
+	z-index: 1000
+	.error-message
+		padding: 8px
+		color: $clr-danger
+		background-color: $clr-white
+		border: 2px solid $clr-danger
+		border-radius: 6px
+		box-shadow: 0 2px 4px rgba(0,0,0,0.2)
+		margin-top: 8px
+		position: relative
+		.btn
+			border: 1px solid $clr-danger
+			border-radius: 2px
+			box-shadow: 1px 1px 2px rgba(0,0,0,0.2)
+			width: 18px
+			height: 18px
+			position: absolute
+			top: 4px
+			right: 4px
+			display: flex
+			justify-content: center
+			align-items: center
+			cursor: pointer
+		.message
+			margin-right: 22px
 </style>
