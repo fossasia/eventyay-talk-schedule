@@ -261,7 +261,7 @@ export default {
 			} else {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
-			return url.pathname.replace(/\//g, '')
+			return url.pathname.split('/').filter(Boolean).pop();
 		},
 		sortBy () {
 			return this.selectedSort
@@ -305,7 +305,8 @@ export default {
 		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
 		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.rooms.data = roomData
-		this.apiUrl = window.location.origin + '/api/events/' + this.eventSlug + '/'
+		const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
+		this.apiUrl = baseUrl + 'api/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
 		const obj = {}
@@ -432,32 +433,13 @@ export default {
 		closeModal () {
 			this.showModal = false
 		},
-		async saveFavs () {
-			try {
-				const response = await (await fetch(`/api/events/${this.eventSlug}/favourite-talk/`,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(this.favs)
-					}))
-				if (response.status === 400) {
-					const data = await response.json()
-					if (data === 'user_not_logged_in') {
-						this.showModal = true
-						return
-					}
-				}
-			} catch (e) {
-				console.error(`error happened when trying to save favourite talk: ${JSON.stringify(this.favs)}`)
-			}
+		saveFavs () {
 			localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
 		},
-		async fav (id) {
+		fav (id) {
 			if (!this.favs.includes(id)) {
 				this.favs.push(id)
-				await this.saveFavs()
+				this.saveFavs()
 			}
 			if (this.loggedIn) {
 				this.apiRequest(`submissions/${id}/favourite/`, 'POST').catch(e => {
@@ -467,7 +449,7 @@ export default {
 				this.pushErrorMessage(this.translationMessages.favs_not_logged_in || this.translationMessages.not_logged_in)
 			}
 		},
-		async unfav (id) {
+		unfav (id) {
 			this.favs = this.favs.filter(elem => elem !== id)
 			this.saveFavs()
 			if (this.loggedIn) {
