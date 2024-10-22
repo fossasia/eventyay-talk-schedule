@@ -90,7 +90,13 @@ import Buntpapier from 'buntpapier'
 import moment from 'moment-timezone'
 import LinearSchedule from 'components/LinearSchedule'
 import GridSchedule from 'components/GridSchedule'
-import { findScrollParent, getLocalizedString } from 'utils'
+import {
+	filterSessionTypesByLanguage,
+	findScrollParent,
+	getLocalizedString,
+	filterItemsByLanguage,
+	filteredSessions
+} from 'utils'
 import AppDropdown from 'components/AppDropdown.vue'
 import AppDropdownContent from 'components/AppDropdownContent.vue'
 import AppDropdownItem from 'components/AppDropdownItem.vue'
@@ -185,21 +191,7 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			let results = null
-			Object.keys(this.filter).forEach(key => {
-				const refKey = this.filter[key].refKey
-				const selectedIds = this.filter[key].data.filter(t => t.selected).map(t => t.value)
-				let founds = null
-				if (selectedIds.length) {
-					if (results && results.length) {
-						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]) && results && results.includes(t.id))?.map(i => i.id) || []
-					} else {
-						founds = this.schedule.talks.filter(t => selectedIds.includes(t[refKey]))?.map(i => i.id) || []
-					}
-					results = founds
-				}
-			})
-			return results
+			return filteredSessions(this?.filter, this?.schedule?.talks)
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -309,17 +301,9 @@ export default {
 		this.apiUrl = baseUrl + 'api/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
-		const obj = {}
-		this.schedule.talks.forEach(t => {
-			if (t.session_type && !obj[t.session_type]) {
-				obj[t.session_type] = true
-				const item = {
-					value: t.session_type,
-					label: (t.session_type)
-				}
-				this.filter.types.data.push(item)
-			}
-		})
+		this.filter.types.data = filterSessionTypesByLanguage(this?.schedule?.talks)
+		this.filter.rooms.data = filterItemsByLanguage(this?.schedule?.rooms)
+		this.filter.tracks.data = filterItemsByLanguage(this?.schedule?.tracks)
 
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
