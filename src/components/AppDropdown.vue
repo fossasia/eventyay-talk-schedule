@@ -1,15 +1,23 @@
 <template>
-  <div v-on-clickaway="away" class="app-drop-down">
+  <div
+    v-on-clickaway="away"
+    class="app-drop-down"
+  >
     <bunt-button @click="toggle">
-      <slot name="toggler"> Toggle </slot>
+      <slot name="toggler">
+        Toggle
+      </slot>
       <svg
-        v-if="this.sharedState.active"
+        v-if="sharedState.active"
         xmlns="http://www.w3.org/2000/svg"
         width="1em"
         height="1em"
         viewBox="0 0 24 24"
       >
-        <path fill="currentColor" d="m7 15l5-5l5 5z" />
+        <path
+          fill="currentColor"
+          d="m7 15l5-5l5 5z"
+        />
       </svg>
       <svg
         v-else
@@ -18,7 +26,10 @@
         height="1em"
         viewBox="0 0 24 24"
       >
-        <path fill="currentColor" d="m7 10l5 5l5-5z" />
+        <path
+          fill="currentColor"
+          d="m7 10l5 5l5-5z"
+        />
       </svg>
     </bunt-button>
     <slot />

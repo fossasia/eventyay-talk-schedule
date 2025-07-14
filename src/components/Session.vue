@@ -46,6 +46,20 @@ const markdownIt = MarkdownIt({
 })
 
 export default {
+	inject: {
+		eventUrl: { default: null },
+		linkTarget: { default: '_self' },
+		generateSessionLinkUrl: {
+			default () {
+				return ({eventUrl, session}) => `${eventUrl}talk/${session.id}/`
+			}
+		},
+		onSessionLinkClick: {
+			default () {
+				return () => {}
+			}
+		}
+	},
 	props: {
 		session: Object,
 		showAbstract: {
@@ -65,20 +79,6 @@ export default {
 			default: false
 		},
 		isLinearSchedule: Boolean
-	},
-	inject: {
-		eventUrl: { default: null },
-		linkTarget: { default: '_self' },
-		generateSessionLinkUrl: {
-			default () {
-				return ({eventUrl, session}) => `${eventUrl}talk/${session.id}/`
-			}
-		},
-		onSessionLinkClick: {
-			default () {
-				return () => {}
-			}
-		}
 	},
 	data () {
 		return {
@@ -126,10 +126,10 @@ export default {
 				return ''
 			}
 			bgColor = bgColor.replace('#', '')
-			var r = parseInt(bgColor.slice(0, 2), 16)
-			var g = parseInt(bgColor.slice(2, 4), 16)
-			var b = parseInt(bgColor.slice(4, 6), 16)
-			var brightness = (r * 299 + g * 587 + b * 114) / 1000
+			const r = parseInt(bgColor.slice(0, 2), 16)
+			const g = parseInt(bgColor.slice(2, 4), 16)
+			const b = parseInt(bgColor.slice(4, 6), 16)
+			const brightness = (r * 299 + g * 587 + b * 114) / 1000
 
 			// If the brightness is over 128, return black. Otherwise, return white
 			return brightness > 128 ? 'black' : 'white'

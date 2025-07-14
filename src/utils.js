@@ -1,7 +1,7 @@
 // import i18n from 'i18n'
 import moment from 'moment'
 
-export function getLocalizedString(string) {
+export function getLocalizedString (string) {
 	if (!string) return ''
 	if (typeof string === 'string') return string
 	const lang = document.querySelector('html').lang || 'en'
@@ -11,13 +11,13 @@ export function getLocalizedString(string) {
 const checkPropScrolling = (node, prop) => ['auto', 'scroll'].includes(getComputedStyle(node, null).getPropertyValue(prop))
 const isScrolling = node => checkPropScrolling(node, 'overflow') || checkPropScrolling(node, 'overflow-x') || checkPropScrolling(node, 'overflow-y')
 
-export function findScrollParent(node) {
+export function findScrollParent (node) {
 	if (!node || node === document.body) return
 	if (isScrolling(node)) return node
 	return findScrollParent(node.parentNode)
 }
 
-export function getPrettyDuration(start, end) {
+export function getPrettyDuration (start, end) {
 	let minutes = end.diff(start, 'minutes')
 	const hours = Math.floor(minutes / 60)
 	if (minutes <= 60) {
@@ -30,17 +30,17 @@ export function getPrettyDuration(start, end) {
 	return `${hours}h`
 }
 
-export function getPrettyDate(start) {
-	const date = moment(start);
-	return date.format('ddd DD. MMM');
+export function getPrettyDate (start) {
+	const date = moment(start)
+	return date.format('ddd DD. MMM')
 }
 
-export function getLanguage() {
+export function getLanguage () {
 	const lang = document.querySelector('html').lang || 'en'
 	return lang
 }
 
-export function getSessionType(item) {
+export function getSessionType (item) {
 	if (typeof item?.session_type === 'string') {
 		return item.session_type
 	} else if (typeof item?.session_type === 'object') {
@@ -54,7 +54,7 @@ export function getSessionType(item) {
 	return null
 }
 
-export function getSelectedName(item) {
+export function getSelectedName (item) {
 	if (typeof item?.name === 'string') {
 		return item.name
 	} else if (typeof item?.name === 'object') {
@@ -68,7 +68,7 @@ export function getSelectedName(item) {
 	return null
 }
 
-export function filterSessionTypesByLanguage(data) {
+export function filterSessionTypesByLanguage (data) {
 	const uniqueSessionTypes = new Set()
 
 	data?.forEach(item => {
@@ -84,7 +84,7 @@ export function filterSessionTypesByLanguage(data) {
 	}))
 }
 
-export function filterItemsByLanguage(data) {
+export function filterItemsByLanguage (data) {
 	const languageMap = new Map()
 
 	data?.forEach(item => {
@@ -94,10 +94,10 @@ export function filterItemsByLanguage(data) {
 		}
 	})
 
-	return Array.from(languageMap).map(([id, name]) => ({value: id, label: name}));
+	return Array.from(languageMap).map(([id, name]) => ({value: id, label: name}))
 }
 
-export function matchesSessionTypeFilter(talk, selectedIds) {
+export function matchesSessionTypeFilter (talk, selectedIds) {
 	if (typeof talk?.session_type === 'string') {
 		return selectedIds.includes(talk.session_type)
 	} else if (typeof talk?.session_type === 'object') {
@@ -106,7 +106,7 @@ export function matchesSessionTypeFilter(talk, selectedIds) {
 	return false
 }
 
-export function filterTalk(talksData, refKey, selectedIds, previousResults) {
+export function filterTalk (talksData, refKey, selectedIds, previousResults) {
 	const talks = talksData
 
 	return talks
@@ -119,7 +119,7 @@ export function filterTalk(talksData, refKey, selectedIds, previousResults) {
 		.map(talk => talk.id) || []
 }
 
-export function filteredSessions(filter, data) {
+export function filteredSessions (filter, data) {
 	let filteredResults = null
 
 	Object.entries(filter).forEach(([key, value]) => {
@@ -133,4 +133,3 @@ export function filteredSessions(filter, data) {
 
 	return filteredResults
 }
-

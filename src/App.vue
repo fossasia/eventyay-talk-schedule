@@ -105,8 +105,13 @@ Vue.use(Buntpapier)
 
 export default {
 	name: 'PretalxSchedule',
-	mixins: [clickaway],
 	components: { LinearSchedule, GridSchedule, AppDropdown, AppDropdownContent, AppDropdownItem },
+	mixins: [clickaway],
+	provide () {
+		return {
+			eventUrl: this.eventUrl
+		}
+	},
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -117,11 +122,6 @@ export default {
 		version: {
 			type: String,
 			default: ''
-		}
-	},
-	provide () {
-		return {
-			eventUrl: this.eventUrl
 		}
 	},
 	data () {
@@ -253,7 +253,7 @@ export default {
 			} else {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
-			return url.pathname.split('/').filter(Boolean).pop();
+			return url.pathname.split('/').filter(Boolean).pop()
 		},
 		sortBy () {
 			return this.selectedSort
@@ -291,13 +291,13 @@ export default {
 			await this.$nextTick()
 			this.onWindowResize()
 		}
-		let trackData = JSON.parse(JSON.stringify(this.schedule.tracks))
+		const trackData = JSON.parse(JSON.stringify(this.schedule.tracks))
 		trackData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.tracks.data = trackData
-		let roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
+		const roomData = JSON.parse(JSON.stringify(this.schedule.rooms))
 		roomData.map(t => { t.value = t.id; t.label = getLocalizedString(t.name); return t })
 		this.filter.rooms.data = roomData
-		const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1);
+		const baseUrl = this.eventUrl.substring(0, this.eventUrl.lastIndexOf('/', this.eventUrl.length - 2) + 1)
 		this.apiUrl = baseUrl + 'api/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
@@ -458,11 +458,11 @@ export default {
 				})
 			})
 		},
-		toggleSortOptions() {
-			this.showSortOptions = !this.showSortOptions;
+		toggleSortOptions () {
+			this.showSortOptions = !this.showSortOptions
 		},
-		handleSortSelected() {
-			this.selectedSort = this.selectedSortIcon;
+		handleSortSelected () {
+			this.selectedSort = this.selectedSortIcon
 		}
 	}
 }
@@ -642,10 +642,10 @@ export default {
     .sort-icon {
       display: flex !important;
       align-items: center;
-	  padding: 0 !important;
-	  min-width: 40px !important;
-	  margin-right: 10px;
-	  width: 40px !important;
+    padding: 0 !important;
+    min-width: 40px !important;
+    margin-right: 10px;
+    width: 40px !important;
     }
 
 	.sort-icon .bunt-button-text {

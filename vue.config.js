@@ -15,7 +15,7 @@ module.exports = {
 		},
 		plugins: [
 			new HtmlWebpackPlugin({
-				filename: 'demo.html',
+				// We remove `filename` option to avoid "Conflict: Multiple assets emit different content to the same filename"
 				minify: false,
 				inject: 'head',
 				template: 'public/demo.html'

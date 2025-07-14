@@ -40,7 +40,7 @@
 // - handle click on already selected day (needs some buntpapier hacking)
 // - optionally only show venueless rooms
 import moment from 'moment-timezone'
-import Session from './Session'
+import Session from './Session.vue'
 import { getLocalizedString, getPrettyDuration } from 'utils'
 
 const getSliceName = function (date) {

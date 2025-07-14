@@ -1,6 +1,9 @@
 <template>
   <transition name="dropdown-content">
-    <div v-if="active" class="dropdown-content">
+    <div
+      v-if="active"
+      class="dropdown-content"
+    >
       <slot />
     </div>
   </transition>

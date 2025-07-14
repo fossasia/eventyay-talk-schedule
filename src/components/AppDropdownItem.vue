@@ -1,11 +1,11 @@
 <template>
-    <div>
-        <slot/>
-    </div>
+  <div>
+    <slot />
+  </div>
 </template>
 
 <script>
 export default {
-    name: "AppDropdownItem"
-};
+	name: 'AppDropdownItem'
+}
 </script>

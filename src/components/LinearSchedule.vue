@@ -68,7 +68,7 @@ export default {
 				case 'popularity':
 					sortFunction = (a, b) => b.fav_count - a.fav_count
 					break
-				default:
+				default: {
 					// default will be sort by time
 					const buckets = {}
 					for (const session of this.sessions) {
@@ -90,6 +90,7 @@ export default {
 						// sort by room for stable sort across time buckets
 						sessions: _.sortBy(sessions, session => this.rooms.findIndex(room => room.id === session.room.id))
 					}))
+				}
 			}
 			return this.sessions.slice().sort(sortFunction)
 		}
