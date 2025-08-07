@@ -332,7 +332,6 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	max-width: 100vw
-	overflow: auto
 	.grid
 		display: grid
 		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
@@ -341,6 +340,7 @@ export default {
 		min-width: min-content
 		> .room
 			position: sticky
+			top: calc(var(--pretalx-sticky-date-offset) + var(--pretalx-sticky-top-offset, 0px))
 			display: flex
 			justify-content: center
 			align-items: center
