@@ -22,23 +22,26 @@
 			@trackToggled="toggleTrackFilterChoice"
 			@roomToggled="toggleRoomFilterChoice"
 		)
+
+
 		bunt-tabs.days(v-if="days && days.length > 1", v-model="currentDay", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.toISODate()", :header="day.toLocaleString(dateFormat)", @selected="changeDay(day)")
-		grid-schedule-wrapper(v-if="showGrid",
-			:sessions="sessions",
-			:rooms="rooms",
-			:days="days",
-			:currentDay="currentDay",
-			:now="now",
-			:hasAmPm="hasAmPm",
-			:timezone="currentTimezone",
-			:locale="locale",
-			:scrollParent="scrollParent",
-			:favs="favs",
-			:onHomeServer="onHomeServer",
-			@changeDay="setCurrentDay($event)",
-			@fav="fav($event)",
-			@unfav="unfav($event)")
+		.anchor-for-sticky.overflow-y-auto.overflow-x-auto(v-if="showGrid")
+			grid-schedule-wrapper(
+				:sessions="sessions",
+				:rooms="rooms",
+				:days="days",
+				:currentDay="currentDay",
+				:now="now",
+				:hasAmPm="hasAmPm",
+				:timezone="currentTimezone",
+				:locale="locale",
+				:scrollParent="scrollParent",
+				:favs="favs",
+				:onHomeServer="onHomeServer",
+				@changeDay="setCurrentDay($event)",
+				@fav="fav($event)",
+				@unfav="unfav($event)")
 		linear-schedule(v-else,
 			:sessions="sessions",
 			:rooms="rooms",
@@ -895,4 +898,14 @@ export default {
 	&:hover .pretalx
 		color: #3aa57c
 
+.relative
+	position: relative
+.overflow-x-auto
+	overflow-x: auto
+.overflow-y-auto
+	overflow-y: auto
+.anchor-for-sticky
+	max-width: calc(100% - 8px)
+	/* Subtract: filter bar, date bar, footer */
+	max-height: calc(100vh - 168px)
 </style>

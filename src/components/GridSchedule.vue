@@ -353,7 +353,7 @@ export default {
 	flex: auto
 	background-color: $clr-grey-50
 	max-width: 100vw
-	overflow: auto
+	/* In comparison to upstream, we removed "overflow" to make room bar sticky */
 	.grid
 		display: grid
 		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
@@ -362,6 +362,7 @@ export default {
 		min-width: min-content
 		> .room
 			position: sticky
+			top: 0
 			display: flex
 			justify-content: center
 			align-items: center
