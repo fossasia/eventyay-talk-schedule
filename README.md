@@ -1,36 +1,38 @@
 # pretalx-schedule
 
 ## Project setup
-```
-npm ci
+
+```sh
+bun i
 ```
 
 ### Compiles and hot-reloads for development
-```
-npm start
+
+```sh
+bun run start
 ```
 
 ### Compiles and minifies for production
-```
-npm run build
+
+```sh
+bun run build
 ```
 
 ### Build for pretalx (web component)
 
-Make sure the `schedule` and `pretalx` repositories share a root directory, then simply run
-
-```
-./update.sh
-```
-
-### Release library to npm
 
 ```sh
-npm version minor|patch
-npm publish --access=public
+bun run build:wc
 ```
 
-### Lints and fixes files
-```
-npm run lint
+Then copy the built files (saved in _dist_) to the project which wants to use this web component.
+See the usage in _wc-demo_ folder.
+
+### Try the Web Component demo
+
+Build and copy the JS files from _dist_ to _wc-demo_.
+Serve this directory with a simple HTTP server:
+
+```sh
+python3 -m http.server -d wc-demo  
 ```

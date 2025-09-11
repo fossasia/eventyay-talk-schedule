@@ -2,6 +2,9 @@
 node_modules
 /dist
 
+wc-demo/pretalx-schedule.js
+wc-demo/pretalx-schedule.umd.cjs
+
 
 # local env files
 .env.local
