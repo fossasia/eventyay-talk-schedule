@@ -56,7 +56,13 @@ export default {
 		currentDay: String,
 		now: Object,
 		scrollParent: Element,
-		sortBy: String,
+		// This sortBy prop is from a customized feature we implemented before,
+		// but was lost after we merged with upstream.
+		// Will recover it sometimes in the future.
+		sortBy: {
+			type: String,
+			default: 'time'
+		},
 		onHomeServer: Boolean
 	},
 	data () {
