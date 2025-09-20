@@ -141,6 +141,19 @@ export default {
 			} else {
 				this.$emit('fav', this.session.id)
 			}
+		},
+		getContrastColor (bgColor) {
+			if (!bgColor) {
+				return ''
+			}
+			bgColor = bgColor.replace('#', '')
+			var r = parseInt(bgColor.slice(0, 2), 16)
+			var g = parseInt(bgColor.slice(2, 4), 16)
+			var b = parseInt(bgColor.slice(4, 6), 16)
+			var brightness = (r * 299 + g * 587 + b * 114) / 1000
+
+			// If the brightness is over 128, return black. Otherwise, return white
+			return brightness > 128 ? 'black' : 'white'
 		}
 	}
 }
