@@ -396,7 +396,7 @@ export default {
 					this.pushErrorMessage(this.translationMessages.favs_not_saved)
 				}
 			}
-			return favs
+			return favs || []
 		},
 		pushErrorMessage (message) {
 			if (!message || !message.length) return
