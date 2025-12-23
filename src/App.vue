@@ -90,6 +90,8 @@ import SessionModal from '~/components/SessionModal'
 import FilterModal from '~/components/FilterModal'
 import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
 
+const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
+
 const markdownIt = MarkdownIt({
 	linkify: false,
 	breaks: true
@@ -368,7 +370,7 @@ export default {
 			if (this.onHomeServer) {
 				headers.append('Content-Type', 'application/json')
 			}
-			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', document.cookie.split('pretalx_csrftoken=').pop().split(';').shift())
+			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', EVENTYAY_CSRF_TOKEN)
 			const response = await fetch(url, {
 				method,
 				headers,
